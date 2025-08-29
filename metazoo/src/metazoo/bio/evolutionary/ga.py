@@ -6,18 +6,21 @@ from rich.progress import Progress
 
 from .utils import Population
 
+
 class GeneticAlgorithm:
     def __init__(
         self,
         fitness_function: Callable[[np.ndarray], float],
-        crossover_function: Callable[[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]],
+        crossover_function: Callable[
+            [np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]
+        ],
         mutation_function: Callable[[np.ndarray], np.ndarray],
         selection_function: Callable[[np.ndarray], np.ndarray],
         encoding: str,
         population_size: int,
         mutation_rate: float = 0.01,
         crossover_rate: float = 0.7,
-        binary_precision: int = 3, # Number of bits per variable for binary encoding
+        binary_precision: int = 3,  # Number of bits per variable for binary encoding
         bounds: Optional[Sequence[Tuple[float, float]]] = None,
         genome_length: Optional[int] = None,
     ):
@@ -36,33 +39,50 @@ class GeneticAlgorithm:
 
         # Get best genome_length
         if self.genome_length is None:
-            if self.encoding == 'real':
+            if self.encoding == "real":
                 self.genome_length = self.dim
-            elif self.encoding == 'binary':
+            elif self.encoding == "binary":
                 self.genome_length = self.binary_precision * self.dim
 
         # Validate
-        if self.encoding == 'binary' and self.genome_length % self.dim != 0:
-            raise ValueError(f"genome_length ({self.genome_length}) must be a multiple of dim ({self.dim}) for binary encoding.")
+        if self.encoding == "binary" and self.genome_length % self.dim != 0:
+            raise ValueError(
+                f"genome_length ({self.genome_length}) must be a multiple of dim ({self.dim}) for binary encoding."
+            )
 
         # Initialize population
         self.population = Population(
             population_size=self.population_size,
             genome_length=self.genome_length,
             bounds=self.bounds,
-            encoding=self.encoding
+            encoding=self.encoding,
         ).initialize()
 
         self.best_individual = None
         self.best_fitness = -np.inf
 
     def eval(self):
-        if self.encoding == 'binary':
-            fitness = np.array([self.fitness_function(self.decode(individual)) for individual in self.population])
+        if self.encoding == "binary":
+            fitness = np.array(
+                [
+                    self.fitness_function(self.decode(individual))
+                    for individual in self.population
+                ]
+            )
         else:
-            fitness = np.array([self.fitness_function(individual) for individual in self.population])
+            fitness = np.array(
+                [self.fitness_function(individual) for individual in self.population]
+            )
+
+        # Handle NaN and -inf fitness values
+        fitness = np.nan_to_num(fitness, nan=-1e10, posinf=-1e10, neginf=-1e10)
+        min_fit = fitness.min()
+        if min_fit < 0:
+            fitness = fitness - min_fit + 1e-8
+
         self.best_fitness = fitness.max()
         self.best_individual = self.population[fitness.argmax()]
+
         return fitness
 
     def evolve(self):
@@ -91,11 +111,11 @@ class GeneticAlgorithm:
         """
         Decodes a binary individual into its real-valued representation.
         """
-        if self.encoding == 'binary':
+        if self.encoding == "binary":
             bits_per_var = self.binary_precision
             decoded = []
             for i, (a, b) in enumerate(self.bounds):
-                bits = individual[i*bits_per_var:(i+1)*bits_per_var]
+                bits = individual[i * bits_per_var : (i + 1) * bits_per_var]
                 value = int("".join(str(int(bit)) for bit in bits), 2)
                 max_value = 2**bits_per_var - 1
                 real_value = a + (b - a) * value / max_value
