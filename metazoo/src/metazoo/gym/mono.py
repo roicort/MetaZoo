@@ -115,7 +115,7 @@ class Function:
         A = 10
         return A * n + np.sum(X**2 - A * np.cos(2 * np.pi * X))
 
-    def plot(self, bounds=(-5, 5), dim=1, num_points=100, population=None, mode='surface'):
+    def plot(self, bounds=(-5, 5), dim=1, num_points=100, population=None, mode='surface') -> go.Figure:
         pio.renderers.default = 'notebook'  # Puedes cambiar a 'browser' si lo prefieres
         metadata = getattr(self, 'metadata', {}).get(self.name, None)
         title = f'{self.name} function'
@@ -135,7 +135,6 @@ class Function:
                 pop_y = np.array([func(np.array([xi])) for xi in pop_x])
                 fig.add_trace(go.Scatter(x=pop_x, y=pop_y, mode='markers', name='Population', marker=dict(color='red', size=8)))
             fig.update_layout(title=title, xaxis_title='x', yaxis_title='f(x)')
-            fig.show()
         elif dim == 2:
             x = np.linspace(bounds[0], bounds[1], num_points)
             y = np.linspace(bounds[0], bounds[1], num_points)
@@ -159,7 +158,8 @@ class Function:
                     fig.add_trace(go.Scatter(x=pop_x, y=pop_y, mode='markers', name='Population', marker=dict(color='red', size=8)))
                 fig.update_layout(title=title, xaxis_title='x', yaxis_title='y')
             else:
-                raise ValueError("El modo debe ser 'surface' o 'contour'.")
-            fig.show()
+                raise ValueError("Mode should be 'surface' or 'contour'.")
         else:
-            raise ValueError('Solo se soporta graficar funciones de 1 o 2 dimensiones.')
+            raise ValueError('Only 1D or 2D functions are supported for plotting.')
+        
+        return fig
