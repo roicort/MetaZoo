@@ -81,7 +81,11 @@ class GeneticAlgorithm:
             fitness = fitness - min_fit + 1e-8
 
         self.best_fitness = fitness.max()
-        self.best_individual = self.population[fitness.argmax()]
+
+        if self.encoding == "binary":
+            self.best_individual = self.decode(self.population[fitness.argmax()])
+        else:
+            self.best_individual = self.population[fitness.argmax()]
 
         return fitness
 
@@ -124,9 +128,15 @@ class GeneticAlgorithm:
         else:
             raise NotImplementedError("Decoding not implemented for this encoding.")
 
-    def run(self, generations: int):
+    def run(self, generations: int, history: bool = False) -> list[np.ndarray]:
+        pop_history = []
         with Progress() as progress:
             task = progress.add_task("Evolving...", total=generations)
             for _ in range(generations):
                 self.evolve()
+                pop_history.append(self.population.copy())
                 progress.advance(task)
+        if history:
+            if self.encoding == "binary":
+                pop_history = [[self.decode(ind) for ind in gen] for gen in pop_history]
+            return pop_history
