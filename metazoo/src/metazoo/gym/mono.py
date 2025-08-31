@@ -5,6 +5,9 @@ import plotly.graph_objects as go
 import plotly.io as pio
 
 class Function:
+    """
+    A class representing a mathematical function for optimization testing.
+    """
 
     def __init__(self, name: str = 'Ackley', reverse: bool = False):
         self.name = name
