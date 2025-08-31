@@ -230,13 +230,10 @@ wheels = [
 [[package]]
 name = "metazoo"
 version = "0.1.0"
-source = { editable = "../metazoo" }
+source = { git = "https://github.com/roicort/MetaZoo?subdirectory=.%2Fmetazoo&rev=main#75abe53788d8b3f0714106bbeff2a5002ba51847" }
 dependencies = [
     { name = "numpy" },
 ]
-
-[package.metadata]
-requires-dist = [{ name = "numpy", specifier = "==2.3.2" }]
 
 [[package]]
 name = "narwhals"
@@ -350,7 +347,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "metazoo", editable = "../metazoo" },
+    { name = "metazoo", git = "https://github.com/roicort/MetaZoo?subdirectory=.%2Fmetazoo&rev=main" },
     { name = "numpy", specifier = ">=2.3.2" },
     { name = "plotly", specifier = ">=6.3.0" },
     { name = "rich", specifier = ">=14.1.0" },
