@@ -56,3 +56,36 @@ Playgrounds is a collection of interactive Jupyter notebooks for experimenting w
 
 It provides a hands-on environment for users to explore and visualize the behavior of different metaheuristic algorithms.
 
+## Architecture
+
+
+```mermaid
+graph TD
+
+    6["User<br>External Actor"]
+    subgraph 1["Core Library<br>Python"]
+        14["Gym Environment<br>Python"]
+        subgraph 2["Bio Module<br>Python"]
+            subgraph 3["Evolutionary Algorithms<br>Python"]
+                10["Evolutionary Utilities<br>Python"]
+                9["Genetic Algorithm<br>Python"]
+                subgraph 4["Operators<br>Python"]
+                    11["Crossover Operators<br>Python"]
+                    12["Mutation Operators<br>Python"]
+                    13["Selection Operators<br>Python"]
+                end
+                %% Edges at this level (grouped by source)
+                9["Genetic Algorithm<br>Python"] -->|Uses| 4["Genetic Operators<br>Python"]
+                9["Genetic Algorithm<br>Python"] -->|Uses| 10["Evolutionary Utilities<br>Python"]
+            end
+            %% Edges at this level (grouped by source)
+            9["Genetic Algorithm<br>Python"] -->|Evaluates in| 14["Gym Environment<br>Python"]
+        end
+    end
+    subgraph 5["Application/Service<br>Python"]
+        7["Main Application<br>Python"]
+    end
+    %% Edges at this level (grouped by source)
+    5["Application/Service<br>Python"] -->|Leverages| 1["Core Library<br>Python"]
+    6["User<br>External Actor"] -->|Interacts with| 5["Application/Service<br>Python"]
+```
