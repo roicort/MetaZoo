@@ -10,6 +10,7 @@ dependencies = [
     "rich>=14.1.0",
     "jupyter>=1.1.1",
     "metazoo",
+    "pandas>=2.3.2",
 ]
 
 [tool.uv.sources]
