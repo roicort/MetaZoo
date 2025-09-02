@@ -107,6 +107,8 @@ class Function:
 
         self.bounds = self.metadata.get(name, {}).get('bounds', [])
         self.available_functions = list(self.metadata.keys())
+        if name not in self.available_functions:
+            raise ValueError(f"The function '{name}' is not available. Options: {self.available_functions}")
 
     def formula(self):
         from IPython.display import display, Math
@@ -359,7 +361,7 @@ class Function:
         metadata = getattr(self, 'metadata', {}).get(self.name, None)
         title = f'${{\\text{{{self.name.capitalize()} function }}:{metadata["formula"]}}}$' if metadata else f'{self.name.capitalize()} function'
         subtitle = f'Bounds: {bounds}' if bounds else ""
-        func = getattr(self, self.name)
+        func = self.__call__
         if dim == 1:
             if isinstance(bounds[0], (tuple, list)):
                 x_bounds = bounds[0]
