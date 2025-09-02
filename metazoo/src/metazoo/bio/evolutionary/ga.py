@@ -3,6 +3,7 @@
 from typing import Optional, Callable, Sequence, Tuple
 import numpy as np
 from rich.progress import Progress
+from plotly import express as px
 
 from .utils import Population
 
@@ -23,6 +24,7 @@ class GeneticAlgorithm:
         binary_precision: int = 3,  # Number of bits per variable for binary encoding
         bounds: Optional[Sequence[Tuple[float, float]]] = None,
         genome_length: Optional[int] = None,
+        minimize: bool = True
     ):
         self.population_size = population_size
         self.genome_length = genome_length
@@ -36,6 +38,7 @@ class GeneticAlgorithm:
         self.dim = len(self.bounds)
         self.encoding = encoding
         self.binary_precision = binary_precision
+        self.minimize = minimize
 
         # Get best genome_length
         if self.genome_length is None:
@@ -60,6 +63,8 @@ class GeneticAlgorithm:
 
         self.best_individual = None
         self.best_fitness = -np.inf
+        self.fitness_history = []
+        self.best_history = []
 
     def eval(self):
         if self.encoding == "binary":
@@ -80,17 +85,24 @@ class GeneticAlgorithm:
         if min_fit < 0:
             fitness = fitness - min_fit + 1e-8
 
-        self.best_fitness = fitness.max()
+        if self.minimize:
+            self.best_fitness = fitness.min()
+            bestcandidate = self.population[fitness.argmin()]
+        else:
+            self.best_fitness = fitness.max()
+            bestcandidate = self.population[fitness.argmax()]
 
         if self.encoding == "binary":
-            self.best_individual = self.decode(self.population[fitness.argmax()])
+            self.best_individual = self.decode(bestcandidate)
         else:
-            self.best_individual = self.population[fitness.argmax()]
+            self.best_individual = bestcandidate
 
         return fitness
 
     def evolve(self):
         fitness = self.eval()
+        self.fitness_history.append(fitness.mean())
+        self.best_history.append(self.best_fitness)
         selected_indices = self.selection_function(self.population, fitness)
         selected_parents = self.population[selected_indices]
         next_generation = self.create_descendants(selected_parents)
@@ -140,3 +152,9 @@ class GeneticAlgorithm:
             if self.encoding == "binary":
                 pop_history = [[self.decode(ind) for ind in gen] for gen in pop_history]
             return pop_history
+
+    def fitness_plot(self) -> None:
+        fig = px.line(y=np.array(self.fitness_history), labels={'x': 'Generation', 'y': 'Fitness'}, title='Fitness History')
+        fig.show()
+        fig = px.line(y=np.array(self.best_history), labels={'x': 'Generation', 'y': 'Best Fitness'}, title='Best Fitness History')
+        fig.show()
