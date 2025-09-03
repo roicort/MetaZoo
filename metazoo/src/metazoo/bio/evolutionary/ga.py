@@ -66,36 +66,57 @@ class GeneticAlgorithm:
         self.fitness_history = []
         self.best_history = []
 
-    def eval(self):
+    def summary(self):
+        """
+        Print all relevant information about the GA instance using rich.
+        """
+        from rich.table import Table
+        from rich.console import Console
+        table = Table(title="Genetic Algorithm Compilation")
+        table.add_column("Parameter", style="bold cyan")
+        table.add_column("Value", style="bold yellow")
+        table.add_row("Population Size", str(self.population_size))
+        table.add_row("Genome Length", str(self.genome_length))
+        table.add_row("Mutation Rate", str(self.mutation_rate))
+        table.add_row("Crossover Rate", str(self.crossover_rate))
+        table.add_row("Encoding", str(self.encoding))
         if self.encoding == "binary":
-            fitness = np.array(
+            table.add_row("Binary Precision", str(self.binary_precision))
+        table.add_row("Bounds", str(self.bounds))
+        table.add_row("Minimize", str(self.minimize))
+        console = Console()
+        console.print(table)
+
+    def eval(self):
+
+        # Raw Fitness (objetivo).
+        # For minimization: lower is better. For maximization: higher is better.
+
+        if self.encoding == "binary":
+            raw_fitness = np.array(
                 [
                     self.fitness_function(self.decode(individual))
                     for individual in self.population
                 ]
             )
         else:
-            fitness = np.array(
+            raw_fitness = np.array(
                 [self.fitness_function(individual) for individual in self.population]
             )
 
-        # Handle NaN and -inf fitness values
-        fitness = np.nan_to_num(fitness, nan=-1e10, posinf=-1e10, neginf=-1e10)
-        min_fit = fitness.min()
-        if min_fit < 0:
-            fitness = fitness - min_fit + 1e-8
-
         if self.minimize:
-            self.best_fitness = fitness.min()
-            bestcandidate = self.population[fitness.argmin()]
+            # Handle invalid values
+            fitness = np.nan_to_num(raw_fitness, nan=1e10, posinf=1e10, neginf=1e10) 
+            self.best_fitness = float(fitness.min())
+            best_idx = int(fitness.argmin())
         else:
-            self.best_fitness = fitness.max()
-            bestcandidate = self.population[fitness.argmax()]
+            fitness = np.nan_to_num(raw_fitness, nan=-1e10, posinf=-1e10, neginf=-1e10)
+            self.best_fitness = float(fitness.max())
+            best_idx = int(fitness.argmax())
 
-        if self.encoding == "binary":
-            self.best_individual = self.decode(bestcandidate)
-        else:
-            self.best_individual = bestcandidate
+        # Get best individual
+        bestcandidate = self.population[best_idx]
+        self.best_individual = bestcandidate if self.encoding == "real" else self.decode(bestcandidate)
 
         return fitness
 
