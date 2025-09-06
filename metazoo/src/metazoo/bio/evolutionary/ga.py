@@ -3,6 +3,8 @@
 from typing import Optional, Callable, Sequence, Tuple
 import numpy as np
 from rich.progress import Progress
+from rich.table import Table
+from rich.console import Console
 from plotly import express as px
 
 from .utils import Population
@@ -21,37 +23,46 @@ class GeneticAlgorithm:
         population_size: int,
         mutation_rate: float = 0.01,
         crossover_rate: float = 0.7,
-        binary_precision: int = 3,  # Number of bits per variable for binary encoding
+        precision: int = 3,  # Number of bits per variable for binary encoding
         bounds: Optional[Sequence[Tuple[float, float]]] = None,
-        genome_length: Optional[int] = None,
         minimize: bool = True
     ):
         self.population_size = population_size
-        self.genome_length = genome_length
         self.fitness_function = fitness_function
         self.mutation_function = mutation_function
         self.crossover_function = crossover_function
         self.selection_function = selection_function
         self.mutation_rate = mutation_rate
         self.crossover_rate = crossover_rate
-        self.bounds = bounds
-        self.dim = len(self.bounds)
         self.encoding = encoding
-        self.binary_precision = binary_precision
         self.minimize = minimize
+        self.genome_length = None
+
+        self.epsilon = 10**(-precision)  # ε = Obtaianable accuracy for binary encoding
+
+        if bounds is None:
+            raise ValueError("bounds must be provided as (low, high) or a sequence of (low, high).")
+        else:
+            self.bounds = bounds
+        self.dim = np.sum([1 for _ in bounds])  # Dimension inferred from bounds
+
+        # Bits per variable for binary encoding
+        # This is calculated based on the precision and the range of each variable
+        # Using the formula: n = ceil(log2((XU - XL) / ε))
+        # where XU and XL are the upper and lower bounds of the variable, and ε is the desired precision
+        # We can understand ε as the smallest difference we want to be able to represent between two values of the variable
+        self.bits_per_var = max(
+                    int(np.ceil(np.log2((xu - xl) / self.epsilon))) for xl, xu in self.bounds
+                )
+        # We use max to ensure we have enough bits for the most constrained variable
 
         # Get best genome_length
         if self.genome_length is None:
             if self.encoding == "real":
                 self.genome_length = self.dim
             elif self.encoding == "binary":
-                self.genome_length = self.binary_precision * self.dim
-
-        # Validate
-        if self.encoding == "binary" and self.genome_length % self.dim != 0:
-            raise ValueError(
-                f"genome_length ({self.genome_length}) must be a multiple of dim ({self.dim}) for binary encoding."
-            )
+                # For binary encoding, genome length is bits per variable times number of variables
+                self.genome_length = self.bits_per_var * self.dim
 
         # Initialize population
         self.population = Population(
@@ -70,28 +81,25 @@ class GeneticAlgorithm:
         """
         Print all relevant information about the GA instance using rich.
         """
-        from rich.table import Table
-        from rich.console import Console
-        table = Table(title="Genetic Algorithm Compilation")
+        table = Table(title="Genetic Algorithm Summary")
         table.add_column("Parameter", style="bold cyan")
-        table.add_column("Value", style="bold yellow")
+        table.add_column("Value", style="bold magenta")
         table.add_row("Population Size", str(self.population_size))
         table.add_row("Genome Length", str(self.genome_length))
         table.add_row("Mutation Rate", str(self.mutation_rate))
         table.add_row("Crossover Rate", str(self.crossover_rate))
         table.add_row("Encoding", str(self.encoding))
         if self.encoding == "binary":
-            table.add_row("Binary Precision", str(self.binary_precision))
+            table.add_row("Epsilon", str(self.epsilon))
+            table.add_row("Bits Per Var", str(self.bits_per_var))
+            table.add_row("Genome Length", str(self.genome_length))
         table.add_row("Bounds", str(self.bounds))
         table.add_row("Minimize", str(self.minimize))
         console = Console()
         console.print(table)
 
     def eval(self):
-
         # Raw Fitness (objetivo).
-        # For minimization: lower is better. For maximization: higher is better.
-
         if self.encoding == "binary":
             raw_fitness = np.array(
                 [
@@ -105,26 +113,26 @@ class GeneticAlgorithm:
             )
 
         if self.minimize:
-            # Handle invalid values
             fitness = np.nan_to_num(raw_fitness, nan=1e10, posinf=1e10, neginf=1e10) 
             self.best_fitness = float(fitness.min())
             best_idx = int(fitness.argmin())
+            fitness_transformed = np.max(fitness) - fitness
         else:
             fitness = np.nan_to_num(raw_fitness, nan=-1e10, posinf=-1e10, neginf=-1e10)
             self.best_fitness = float(fitness.max())
             best_idx = int(fitness.argmax())
+            fitness_transformed = fitness
 
-        # Get best individual
         bestcandidate = self.population[best_idx]
         self.best_individual = bestcandidate if self.encoding == "real" else self.decode(bestcandidate)
 
-        return fitness
+        return fitness, fitness_transformed
 
     def evolve(self):
-        fitness = self.eval()
+        fitness, fitness_transformed = self.eval()
         self.fitness_history.append(fitness.mean())
         self.best_history.append(self.best_fitness)
-        selected_indices = self.selection_function(self.population, fitness)
+        selected_indices = self.selection_function(self.population, fitness_transformed)
         selected_parents = self.population[selected_indices]
         next_generation = self.create_descendants(selected_parents)
         self.population = next_generation
@@ -149,7 +157,7 @@ class GeneticAlgorithm:
         Decodes a binary individual into its real-valued representation.
         """
         if self.encoding == "binary":
-            bits_per_var = self.binary_precision
+            bits_per_var = self.bits_per_var
             decoded = []
             for i, (a, b) in enumerate(self.bounds):
                 bits = individual[i * bits_per_var : (i + 1) * bits_per_var]
