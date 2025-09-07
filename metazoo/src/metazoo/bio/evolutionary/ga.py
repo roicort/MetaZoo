@@ -25,7 +25,8 @@ class GeneticAlgorithm:
         crossover_rate: float = 0.7,
         precision: int = 3,  # Number of bits per variable for binary encoding
         bounds: Optional[Sequence[Tuple[float, float]]] = None,
-        minimize: bool = True
+        minimize: bool = True,
+        elitism: float = None,  # Percentage of best individuals to preserve
     ):
         self.population_size = population_size
         self.fitness_function = fitness_function
@@ -37,6 +38,7 @@ class GeneticAlgorithm:
         self.encoding = encoding
         self.minimize = minimize
         self.genome_length = None
+        self.elitism = elitism
 
         self.epsilon = 10**(-precision)  # ε = Obtaianable accuracy for binary encoding
 
@@ -135,9 +137,29 @@ class GeneticAlgorithm:
         selected_indices = self.selection_function(self.population, fitness_transformed)
         selected_parents = self.population[selected_indices]
         next_generation = self.create_descendants(selected_parents)
+
+        if self.elitism is not None:
+            # Elitism
+            # Its a stategy to preserve the best individuals from one generation to the next.
+            # This is done to ensure that the best solutions found so far are not lost due to the stochastic nature of genetic algorithms.
+            # Here, we simply copy the best individual from the current population to the next generation.
+            # This garantees that the best solution found so far is always preserved.
+            # Think that in nature, the best individuals are more likely to survive and reproduce, passing their genes to the next generation.
+            # Preserve N% of the best individuals
+            N = max(1, int(self.elitism * self.population_size))
+            if self.minimize:
+                elite_indices = np.argsort(fitness)[:N]
+            else:
+                elite_indices = np.argsort(fitness)[-N:]
+            elites = self.population[elite_indices]
+            next_generation[:N] = elites  # Mantener el tamaño de población
+
         self.population = next_generation
 
     def create_descendants(self, parents: np.ndarray) -> np.ndarray:
+        # Validate
+        if len(parents) < 2:
+            raise ValueError("Not enough parents to create descendants.")
         next_generation = []
         for _ in range(self.population_size // 2):
             # Select two parents
