@@ -16,7 +16,7 @@ def expected_values(fitness: np.array) -> np.array:
     number_of_individuals = len(fitness)
     return fitness / average_fitness * number_of_individuals
 
-def roulette(population: np.ndarray, fitness: np.ndarray) -> np.ndarray:
+def roulette(population: np.ndarray, fitness: np.ndarray, shift: bool = True) -> np.ndarray:
     """
     Roulette Wheel Selection
 
@@ -26,12 +26,21 @@ def roulette(population: np.ndarray, fitness: np.ndarray) -> np.ndarray:
     Think of this as a roulette wheel where each individual has a slice of the wheel sized according to its fitness. 
     The wheel is spun, and the individual on which the wheel stops is selected. 
     This process is repeated until the desired number of individuals is selected.
+
+    shift: If True, shifts fitness values to be non-negative.
     """
-    expected = expected_values(fitness)
-    selected_indices = np.random.choice(len(population), size=len(population), p=expected/expected.sum())
+    expected = expected_values(fitness) # This normalizes fitness values to sum to population size
+    if shift:
+        # Shift expected values to be non-negative
+        # Shift works by subtracting the minimum expected value from all expected values
+        # and adding a small constant (1e-6) to avoid zero probabilities
+        expected = expected - np.min(expected) + 1e-6
+    probabilities = expected / np.sum(expected)
+    selected_indices = np.random.choice(len(population), size=len(population), p=probabilities)
+    assert len(selected_indices) == len(population)
     return selected_indices
 
-def stochastic_universal_sampling(population: np.ndarray, fitness: np.ndarray) -> np.ndarray:
+def stochastic_universal_sampling(population: np.ndarray, fitness: np.ndarray, shift: bool = True) -> np.ndarray:
     """
     Stochastic Universal Sampling (SUS)
 
@@ -43,9 +52,14 @@ def stochastic_universal_sampling(population: np.ndarray, fitness: np.ndarray) -
     """
 
     expected = expected_values(fitness)
+    if shift:
+        expected = expected - np.min(expected) + 1e-6
     total_fitness = np.sum(expected)
     point_distance = total_fitness / len(population)
     start_point = np.random.uniform(0, point_distance)
+    # Generate pointers for selection
+    # These pointers are equally spaced around the roulette wheel, 
+    # in other words, they are spaced by point_distance and are evenly distributed.
     pointers = [start_point + i * point_distance for i in range(len(population))]
 
     selected_indices = []
@@ -56,6 +70,7 @@ def stochastic_universal_sampling(population: np.ndarray, fitness: np.ndarray) -
                 selected_indices.append(idx)
                 break
 
+    assert len(selected_indices) == len(population)
     return np.array(selected_indices)
 
 def rank(population: np.ndarray, fitness: np.ndarray) -> np.ndarray:
@@ -71,19 +86,53 @@ def rank(population: np.ndarray, fitness: np.ndarray) -> np.ndarray:
     total_rank = np.sum(ranks) # Sum of ranks
     probabilities = ranks / total_rank if total_rank > 0 else np.ones_like(ranks) / len(ranks) # Avoid division by zero
     selected_indices = np.random.choice(len(population), size=len(population), p=probabilities) # Select individuals based on probabilities
+    assert len(selected_indices) == len(population)
     return selected_indices
 
-def tournament(population: np.ndarray, fitness: np.ndarray, tournament_size: int = 3) -> np.ndarray:
+def tournament(population: np.ndarray, fitness: np.ndarray, K: int = 3, type: str = "standard", replace: bool = False) -> np.ndarray:
     """
     Tournament Selection
     Info: In tournament selection, a subset of individuals is randomly chosen from the population, 
     and the individual with the highest fitness in this subset is selected. 
     This process is repeated until the desired number of individuals is selected.
+
+    K is the tournament size, which determines how many individuals are randomly chosen for each tournament.
     """
     selected_indices = []
-    for _ in range(len(population)):
-        tournament_indices = np.random.choice(len(population), size=tournament_size, replace=False)
-        tournament_fitness = fitness[tournament_indices]
-        winner_index = tournament_indices[np.argmax(tournament_fitness)]
-        selected_indices.append(winner_index)
+    
+    if type == "standard":
+        for _ in range(len(population)):
+            # Randomly select K individuals for the tournament
+            # IF replace is True, individuals can be selected multiple times
+            tournament_indices = np.random.choice(len(population), size=K, replace=replace)
+            # Select the individual with the highest fitness from the tournament
+            # Tie-breaking is handled by np.argmax which returns the first occurrence
+            best_idx = tournament_indices[np.argmax(fitness[tournament_indices])]
+            selected_indices.append(best_idx)
+
+    elif type == "proportional":
+        for _ in range(len(population)):
+            # Randomly select K individuals for the tournament
+            # IF replace is True, individuals can be selected multiple times
+            tournament_indices = np.random.choice(len(population), size=K, replace=replace)
+            # Select an individual based on fitness-proportionate probabilities
+            tournament_fitness = fitness[tournament_indices]
+            # Here, ties are handled by the probability distribution.
+            # If multiple individuals have the same fitness, they will have the same probability of being selected.
+            probabilities = tournament_fitness / np.sum(tournament_fitness)
+            selected_idx = np.random.choice(tournament_indices, p=probabilities)
+            selected_indices.append(selected_idx)
+    else:
+        raise ValueError("Invalid tournament type. Choose 'standard' or 'proportional'.")
+    assert len(selected_indices) == len(population)
     return np.array(selected_indices)
+    
+def uniform(population: np.ndarray, fitness: np.ndarray) -> np.ndarray:
+    """
+    Uniform Random Selection
+    Info: In uniform random selection, individuals are selected randomly from the population with equal probability, 
+    regardless of their fitness values. This method does not consider the fitness of individuals and treats all individuals equally.
+    """
+    selected_indices = np.random.choice(len(population), size=len(population), replace=True)
+    assert len(selected_indices) == len(population)
+    return selected_indices
