@@ -3,12 +3,24 @@
 import numpy as np
 
 def onepoint(parent1, parent2):
+    """
+    One-point crossover between two parents.
+
+    A crossover point is selected at random, and the segments after this point are swapped
+    between the two parents to create two children.
+    """
     point = np.random.randint(1, parent1.shape[0])
     child1 = np.concatenate([parent1[:point], parent2[point:]])
     child2 = np.concatenate([parent2[:point], parent1[point:]])
     return child1, child2
 
 def two_point_crossover(parent1, parent2):
+    """
+    Two-point crossover between two parents.
+
+    Two crossover points are selected at random, and the segments between these points are swapped
+    between the two parents to create two children.
+    """
     point1 = np.random.randint(1, parent1.shape[0])
     point2 = np.random.randint(1, parent1.shape[0])
     if point1 > point2:
@@ -18,6 +30,13 @@ def two_point_crossover(parent1, parent2):
     return child1, child2
 
 def k_points_crossover(parent1, parent2, k):
+    """
+    K-point crossover between two parents.
+
+    K crossover points are selected at random, and the segments between these points are swapped
+    between the two parents to create two children.
+    """
+    
     points = np.random.choice(range(1, parent1.shape[0]), size=k, replace=False)
     points.sort()
     child1 = np.concatenate([parent1[:points[0]], parent2[points[0]:points[1]], parent1[points[1]:]])
