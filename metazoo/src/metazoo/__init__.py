@@ -1,2 +1,5 @@
-def hello() -> str:
-    return "Hello from metazoo!"
+
+from . import bio
+from . import gym
+
+__all__ = ["bio", "gym"]

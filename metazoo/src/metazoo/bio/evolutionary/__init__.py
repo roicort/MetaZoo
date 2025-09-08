@@ -1,3 +1,4 @@
-from .ga import *
+from .ga import GeneticAlgorithm
+from . import operators
 
-__all__ = ["GeneticAlgorithm"]
+__all__ = ["GeneticAlgorithm", "operators"]
