@@ -40,10 +40,14 @@ class GeneticAlgorithm:
         self.genome_length = None
         self.elitism = elitism
 
-        self.epsilon = 10**(-precision)  # ε = Obtaianable accuracy for binary encoding
+        self.epsilon = 10 ** (
+            -precision
+        )  # ε = Obtaianable accuracy for binary encoding
 
         if bounds is None:
-            raise ValueError("bounds must be provided as (low, high) or a sequence of (low, high).")
+            raise ValueError(
+                "bounds must be provided as (low, high) or a sequence of (low, high)."
+            )
         else:
             self.bounds = bounds
         self.dim = np.sum([1 for _ in bounds])  # Dimension inferred from bounds
@@ -54,8 +58,8 @@ class GeneticAlgorithm:
         # where XU and XL are the upper and lower bounds of the variable, and ε is the desired precision
         # We can understand ε as the smallest difference we want to be able to represent between two values of the variable
         self.bits_per_var = max(
-                    int(np.ceil(np.log2((xu - xl) / self.epsilon))) for xl, xu in self.bounds
-                )
+            int(np.ceil(np.log2((xu - xl) / self.epsilon))) for xl, xu in self.bounds
+        )
         # We use max to ensure we have enough bits for the most constrained variable
 
         # Get best genome_length
@@ -96,7 +100,9 @@ class GeneticAlgorithm:
         table.add_row("Mutation Function", self.mutation_function.__name__)
         table.add_row("Fitness Function", self.fitness_function.__name__)
         table.add_row("Dimension", str(self.dim))
-        table.add_row("Elitism", str(self.elitism) if self.elitism is not None else "None")
+        table.add_row(
+            "Elitism", str(self.elitism) if self.elitism is not None else "None"
+        )
         if self.encoding == "binary":
             table.add_row("Epsilon", str(self.epsilon))
             table.add_row("Bits Per Var", str(self.bits_per_var))
@@ -107,7 +113,7 @@ class GeneticAlgorithm:
         console.print(table)
 
     def eval(self):
-        # Raw Fitness (objetivo).
+        # Raw Fitness.
         if self.encoding == "binary":
             raw_fitness = np.array(
                 [
@@ -121,7 +127,7 @@ class GeneticAlgorithm:
             )
 
         if self.minimize:
-            fitness = np.nan_to_num(raw_fitness, nan=1e10, posinf=1e10, neginf=1e10) 
+            fitness = np.nan_to_num(raw_fitness, nan=1e10, posinf=1e10, neginf=1e10)
             self.best_fitness = float(fitness.min())
             best_idx = int(fitness.argmin())
             fitness_transformed = np.max(fitness) - fitness
@@ -132,7 +138,9 @@ class GeneticAlgorithm:
             fitness_transformed = fitness
 
         bestcandidate = self.population[best_idx]
-        self.best_individual = bestcandidate if self.encoding == "real" else self.decode(bestcandidate)
+        self.best_individual = (
+            bestcandidate if self.encoding == "real" else self.decode(bestcandidate)
+        )
 
         return fitness, fitness_transformed
 
@@ -154,11 +162,17 @@ class GeneticAlgorithm:
             # Preserve N% of the best individuals
             N = max(1, int(self.elitism * self.population_size))
             if self.minimize:
-                elite_indices = np.argsort(fitness)[:N]
+                elite_indices = np.argsort(fitness)[
+                    :N
+                ]  # Indices of the N best individuals (minimization)
             else:
-                elite_indices = np.argsort(fitness)[-N:]
+                elite_indices = np.argsort(fitness)[
+                    -N:
+                ]  # Indices of the N best individuals (maximization)
             elites = self.population[elite_indices]
-            next_generation[:N] = elites  # Mantener el tamaño de población
+            next_generation[:N] = (
+                elites  # Replace the first N individuals with the elites
+            )
 
         self.population = next_generation
 
@@ -197,21 +211,36 @@ class GeneticAlgorithm:
         else:
             raise NotImplementedError("Decoding not implemented for this encoding.")
 
-    def run(self, generations: int, history: bool = False) -> list[np.ndarray]:
+    def run(
+        self, generations: int, history: bool = False, verbose: bool = True
+    ) -> list[np.ndarray]:
         pop_history = []
-        with Progress() as progress:
-            task = progress.add_task("Evolving...", total=generations)
+        if verbose:
+            with Progress() as progress:
+                task = progress.add_task("Evolving...", total=generations)
+                for _ in range(generations):
+                    self.evolve()
+                    pop_history.append(self.population.copy())
+                    progress.advance(task)
+        else:
             for _ in range(generations):
                 self.evolve()
                 pop_history.append(self.population.copy())
-                progress.advance(task)
         if history:
             if self.encoding == "binary":
                 pop_history = [[self.decode(ind) for ind in gen] for gen in pop_history]
             return pop_history
 
     def fitness_plot(self) -> None:
-        fig = px.line(y=np.array(self.fitness_history), labels={'x': 'Generation', 'y': 'Fitness'}, title='Fitness History')
+        fig = px.line(
+            y=np.array(self.fitness_history),
+            labels={"x": "Generation", "y": "Fitness"},
+            title="Fitness History",
+        )
         fig.show()
-        fig = px.line(y=np.array(self.best_history), labels={'x': 'Generation', 'y': 'Best Fitness'}, title='Best Fitness History')
+        fig = px.line(
+            y=np.array(self.best_history),
+            labels={"x": "Generation", "y": "Best Fitness"},
+            title="Best Fitness History",
+        )
         fig.show()
