@@ -91,6 +91,12 @@ class GeneticAlgorithm:
         table.add_row("Mutation Rate", str(self.mutation_rate))
         table.add_row("Crossover Rate", str(self.crossover_rate))
         table.add_row("Encoding", str(self.encoding))
+        table.add_row("Selection Function", self.selection_function.__name__)
+        table.add_row("Crossover Function", self.crossover_function.__name__)
+        table.add_row("Mutation Function", self.mutation_function.__name__)
+        table.add_row("Fitness Function", self.fitness_function.__name__)
+        table.add_row("Dimension", str(self.dim))
+        table.add_row("Elitism", str(self.elitism) if self.elitism is not None else "None")
         if self.encoding == "binary":
             table.add_row("Epsilon", str(self.epsilon))
             table.add_row("Bits Per Var", str(self.bits_per_var))

@@ -10,7 +10,7 @@ class Function:
     """
 
     def __init__(self, name: str = 'Ackley', reverse: bool = False):
-        self.name = name
+        self.__name__ = name
         self.reverse = reverse
         self.metadata = {
             
@@ -119,7 +119,7 @@ class Function:
             print("No LaTeX formula available for this function.")
 
     def __call__(self, X: np.ndarray) -> float:
-        value = getattr(self, self.name)(X)
+        value = getattr(self, self.__name__)(X)
         if self.reverse:
             return -value
         return value
@@ -358,8 +358,8 @@ class Function:
 
     def plot(self, bounds, dim=1, num_points=100, population=None, mode='surface', colorscale='Viridis') -> go.Figure:
         pio.renderers.default = 'notebook'
-        metadata = getattr(self, 'metadata', {}).get(self.name, None)
-        title = f'${{\\text{{{self.name.capitalize()} function }}:{metadata["formula"]}}}$' if metadata else f'{self.name.capitalize()} function'
+        metadata = getattr(self, 'metadata', {}).get(self.__name__, None)
+        title = f'${{\\text{{{self.__name__.capitalize()} function }}:{metadata["formula"]}}}$' if metadata else f'{self.__name__.capitalize()} function'
         subtitle = f'Bounds: {bounds}' if bounds else ""
         func = self.__call__
         if dim == 1:
