@@ -1,0 +1,8 @@
+/* Custom red header for MkDocs Material */
+.md-header {
+  background: #b71c1c !important;
+  color: #fff !important;
+}
+.md-header__title {
+  color: #fff !important;
+}

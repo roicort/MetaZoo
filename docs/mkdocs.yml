@@ -1,2 +1,56 @@
-site_name: My Docs
-theme: material
+site_name: MetaZoo Docs
+site_url: https://github.com/roicort/MetaZoo
+repo_url: https://github.com/roicort/MetaZoo
+repo_name: roicort/MetaZoo
+docs_dir: src
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: pink
+  font:
+    text: Roboto
+    code: Fira Mono
+  logo: assets/logo.svg
+extra_css:
+  - assets/custom.css
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Modules:
+    - Bio:
+      - Overview: bio.md
+      - Evolutionary:
+        - Overview: evolutionary.md
+        - Operators: evolutionary/operators.md
+    - Gym:
+      - Overview: gym.md
+      - Mono: gym/mono.md
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_root_toc_entry: true
+            show_source: true
+            docstring_style: google
+            separate_signature: true
+            extra:
+              rendering:
+                show_if_no_docstring: true
+                show_private_members: true
+                show_special_members: true
+                members_order: alphabetical
+                filters:
+                  - "!^_.*"
+#extra:
+#  alternate:
+#    - name: English
+#      link: /en/
+#      lang: en
+#    - name: Español
+#      link: /es/
+#      lang: es
