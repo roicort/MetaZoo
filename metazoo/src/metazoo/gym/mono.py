@@ -98,10 +98,6 @@ class Function:
             'Shekel': {
                 'formula': r'f(x_1, x_2) = \left(1 - \frac{x_1}{\sqrt{1 + x_2^2}}\right)^2 + \left(1 - \frac{x_2}{\sqrt{1 + x_1^2}}\right)^2',
                 'bounds': [(-100, 100), (-100, 100)]
-            },
-            'Easom': {
-                'formula': r'f(x_1, x_2) = -\cos(x_1) \cos(x_2) \exp\left(-\left(x_1 - \pi\right)^2 - \left(x_2 - \pi\right)^2\right)',
-                'bounds': [(-100, 100), (-100, 100)]
             }
         }
 
@@ -257,7 +253,7 @@ class Function:
         return 2 * x1**2 - 1.05 * x1**4 + (x1**6) / 6 + x1 * x2 + x2**2
     
     @staticmethod
-    def Aasom(X: np.ndarray) -> float:
+    def Easom(X: np.ndarray) -> float:
         """
         Easom
         """
