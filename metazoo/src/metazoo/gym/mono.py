@@ -186,6 +186,8 @@ class Function:
         x1, x2 = X
         term1 = 1 + ((x1 + x2 + 1)**2) * (19 - 14 * x1 + 3 * x1**2 - 14 * x2 + 6 * x1 * x2)
         term2 = (x1 + x2)**2
+        if term2 == 0:
+            return np.inf
         return term1 / term2
     
     @staticmethod
@@ -348,15 +350,6 @@ class Function:
             result += 1.0 / (c[i] + s)
         return result
 
-    @staticmethod
-    def Easom(X: np.ndarray) -> float:
-        """
-        Easom
-        """
-        if len(X) != 2:
-            raise ValueError("Easom function is only defined for 2D inputs.")
-        x1, x2 = X
-        return -np.cos(x1) * np.cos(x2) * np.exp(-((x1 - np.pi) ** 2 + (x2 - np.pi) ** 2))
 
     def plot(self, bounds, dim=1, num_points=100, population=None, mode='surface', colorscale='Viridis') -> go.Figure:
         """
