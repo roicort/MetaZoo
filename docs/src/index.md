@@ -3,7 +3,8 @@
 
 <img src="assets/logo.svg" alt="MetaZoo Logo" width="200" />
 
-MetaZoo is a Python library for evolutionary algorithms and gym environments for biological simulations.
+A zoo of metaheuristic algorithms for optimization (please do not feed them).
+It includes genetic algorithms, evolutionary strategies, and other evolutionary operators, as well as biological utilities and custom gym environments.
 
 ## Features
 - Genetic algorithms and evolutionary operators

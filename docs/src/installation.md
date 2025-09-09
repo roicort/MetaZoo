@@ -6,7 +6,7 @@ I really recomend using uv package manager.
 To install MetaZoo from GitHub.
 
 ```bash
- uv add "metazoo @ git+https://github.com/roicort/MetaZoo"
+uv add "metazoo @ git+https://github.com/roicort/MetaZoo@main#subdirectory=metazoo"
 ```
 
 Or, if you are developing locally, clone the repository and install with:

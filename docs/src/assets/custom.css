@@ -1,8 +1,9 @@
-/* Custom red header for MkDocs Material */
-.md-header {
-  background: #b71c1c !important;
-  color: #fff !important;
+:root  > * {
+  --md-primary-fg-color:        #52796F;
+  --md-primary-fg-color--light: #A5D6A7;
+  --md-primary-fg-color--dark:  #1B5E20;
 }
-.md-header__title {
-  color: #fff !important;
+
+[data-md-color-scheme="slate"] {
+  --md-hue: 210; 
 }

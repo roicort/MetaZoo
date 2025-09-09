@@ -7,8 +7,8 @@ theme:
   name: material
   palette:
     - scheme: slate
-      primary: indigo
-      accent: pink
+      primary: custom
+      accent: custom
   font:
     text: Roboto
     code: Fira Mono
