@@ -114,6 +114,10 @@ class GeneticAlgorithm:
         console.print(table)
 
     def eval(self):
+        """
+        Evaluate the fitness of the current population.
+        """
+        
         # Raw Fitness.
         if self.encoding == "binary":
             raw_fitness = np.array(
@@ -146,6 +150,9 @@ class GeneticAlgorithm:
         return fitness, fitness_transformed
 
     def evolve(self):
+        """
+        Perform one generation of evolution.
+        """
         fitness, fitness_transformed = self.eval()
         self.fitness_history.append(fitness.mean())
         self.best_history.append(self.best_fitness)
@@ -178,6 +185,9 @@ class GeneticAlgorithm:
         self.population = next_generation
 
     def create_descendants(self, parents: np.ndarray) -> np.ndarray:
+        """
+        Create descendants from the selected parents using crossover and mutation.
+        """
         # Validate
         if len(parents) < 2:
             raise ValueError("Not enough parents to create descendants.")

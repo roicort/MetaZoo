@@ -24,6 +24,7 @@ nav:
       - Overview: bio.md
       - Evolutionary:
         - Overview: evolutionary.md
+        - Genetic Algorithm: ga.md
         - Operators: evolutionary/operators.md
     - Gym:
       - Overview: gym.md
@@ -34,18 +35,17 @@ plugins:
       handlers:
         python:
           options:
-            show_root_toc_entry: true
-            show_source: true
-            docstring_style: google
-            separate_signature: true
             extra:
-              rendering:
-                show_if_no_docstring: true
-                show_private_members: true
-                show_special_members: true
-                members_order: alphabetical
-                filters:
-                  - "!^_.*"
+              show_root_toc_entry: true
+              show_source: true
+              docstring_style: google
+              separate_signature: true
+              show_if_no_docstring: true
+              show_private_members: true
+              show_special_members: true
+              members_order: alphabetical
+              filters:
+                - "!^_.*"
 #extra:
 #  alternate:
 #    - name: English
