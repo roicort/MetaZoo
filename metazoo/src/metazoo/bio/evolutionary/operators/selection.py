@@ -89,7 +89,7 @@ def rank(population: np.ndarray, fitness: np.ndarray) -> np.ndarray:
     assert len(selected_indices) == len(population)
     return selected_indices
 
-def tournament(population: np.ndarray, fitness: np.ndarray, K: int = 3, type: str = "standard", replace: bool = False) -> np.ndarray:
+def tournament(population: np.ndarray, fitness: np.ndarray, K: int = 3, type: str = "standard", replace: bool = True) -> np.ndarray:
     """
     Tournament Selection
     Info: In tournament selection, a subset of individuals is randomly chosen from the population, 
@@ -98,6 +98,10 @@ def tournament(population: np.ndarray, fitness: np.ndarray, K: int = 3, type: st
 
     K is the tournament size, which determines how many individuals are randomly chosen for each tournament.
     """
+
+    if not replace and K > len(population):
+        raise ValueError(f"K={K} is larger than population size={len(population)}")
+    
     selected_indices = []
     
     if type == "standard":
@@ -119,7 +123,8 @@ def tournament(population: np.ndarray, fitness: np.ndarray, K: int = 3, type: st
             tournament_fitness = fitness[tournament_indices]
             # Here, ties are handled by the probability distribution.
             # If multiple individuals have the same fitness, they will have the same probability of being selected.
-            probabilities = tournament_fitness / np.sum(tournament_fitness)
+            total = np.sum(tournament_fitness)
+            probabilities = tournament_fitness / total if not np.isnan(total) and not total == 0 else np.full_like(tournament_fitness, 1.0 / len(tournament_fitness)) # Avoid division by zero
             selected_idx = np.random.choice(tournament_indices, p=probabilities)
             selected_indices.append(selected_idx)
     else:
