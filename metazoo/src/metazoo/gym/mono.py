@@ -107,6 +107,9 @@ class Function:
             raise ValueError(f"The function '{name}' is not available. Options: {self.available_functions}")
 
     def formula(self):
+        """ 
+        Displays the LaTeX formula of the function if available.
+        """
         from IPython.display import display, Math
         formula = self.metadata.get(self.name, None)
         if formula:
@@ -115,6 +118,9 @@ class Function:
             print("No LaTeX formula available for this function.")
 
     def __call__(self, X: np.ndarray) -> float:
+        """
+        Evaluates the function at a given point X.
+        """
         value = getattr(self, self.__name__)(X)
         if self.reverse:
             return -value
@@ -353,6 +359,20 @@ class Function:
         return -np.cos(x1) * np.cos(x2) * np.exp(-((x1 - np.pi) ** 2 + (x2 - np.pi) ** 2))
 
     def plot(self, bounds, dim=1, num_points=100, population=None, mode='surface', colorscale='Viridis') -> go.Figure:
+        """
+        Plots the function in 1D or 2D.
+        If a population is provided, it will be overlaid on the function plot.
+        Parameters:
+            bounds: Tuple specifying the range for each dimension.
+            dim: Dimension of the function (1 or 2).
+            num_points: Number of points to sample for the plot.
+            population: Optional numpy array of shape (n_individuals, dim) to overlay on the plot.
+            mode: 'surface' or 'contour' for 2D plots.
+            colorscale: Plotly colorscale for the function surface/contour.
+        Returns:
+            A Plotly Figure object.
+        """
+
         pio.renderers.default = 'notebook'
         metadata = getattr(self, 'metadata', {}).get(self.__name__, None)
         title = f'${{\\text{{{self.__name__.capitalize()} function }}:{metadata["formula"]}}}$' if metadata else f'{self.__name__.capitalize()} function'

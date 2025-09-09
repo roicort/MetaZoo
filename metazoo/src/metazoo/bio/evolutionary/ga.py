@@ -11,6 +11,7 @@ from .utils import Population
 
 
 class GeneticAlgorithm:
+    """A Simple Genetic Algorithm (GA) implementation."""
     def __init__(
         self,
         fitness_function: Callable[[np.ndarray], float],
@@ -46,7 +47,7 @@ class GeneticAlgorithm:
 
         if bounds is None:
             raise ValueError(
-                "bounds must be provided as (low, high) or a sequence of (low, high)."
+                "Bounds must be provided as (low, high) or a sequence of (low, high)."
             )
         else:
             self.bounds = bounds
