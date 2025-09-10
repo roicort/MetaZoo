@@ -110,12 +110,11 @@ class Function:
         """ 
         Displays the LaTeX formula of the function if available.
         """
-        from IPython.display import display, Math
-        formula = self.metadata.get(self.name, None)
+        formula = self.metadata.get(self.__name__, None)
         if formula:
-            display(Math(formula))
+            return formula['formula']
         else:
-            print("No LaTeX formula available for this function.")
+            return "No LaTeX formula available for this function."
 
     def __call__(self, X: np.ndarray) -> float:
         """
