@@ -30,8 +30,16 @@ nav:
       - Overview: gym.md
       - Mono: gym/mono.md
   - PettingZoo: pettingzoo.md
+  - Playgrounds:
+    - Elitismo (es): assets/Elitismo.ipynb
+    - Algoritmo Genético y Funciones de prueba (es): assets/Functions.ipynb
+    - Genetic Algorithm Example (en): assets/GA.ipynb
 plugins:
   - search
+  - mkdocs-jupyter:
+      include: ["*.ipynb"]
+      include_requirejs: true
+      ignore_h1_titles: true
   - mkdocstrings:
       handlers:
         python:
