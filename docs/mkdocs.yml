@@ -29,6 +29,7 @@ nav:
     - Gym:
       - Overview: gym.md
       - Mono: gym/mono.md
+  - PettingZoo: pettingzoo.md
 plugins:
   - search
   - mkdocstrings:
