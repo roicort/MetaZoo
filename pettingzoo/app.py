@@ -12,60 +12,133 @@ available_algorithms = ["Genetic Algorithm"]
 available_functions = Function().available_functions
 colorscales = px.colors.named_colorscales()
 
+st.set_page_config(page_title="Petting Zoo", layout="wide")
 st.title("Petting Zoo")
 
-algorithm = st.selectbox("Algorithm Selection", available_algorithms)
-function = st.selectbox("Function Selection", available_functions)
-colorscale = st.selectbox("Color Selection", colorscales)
-minimize = st.checkbox("Minimize Function?", value=True)
+with st.sidebar:
+    st.title("Petting Zoo")
+    st.header("Configuration")
+    with st.expander("About", expanded=False):
+        st.markdown(
+            """
+**Petting Zoo** is an interactive playground to experiment with optimization & evolutionary algorithms on analytic test functions.
+
+It is powered by the **MetaZoo** library (core evolutionary / gym components).
+
+Repo: [MetaZoo on GitHub](https://github.com/roicort/MetaZoo)
+
+Select a function, tune GA parameters, run the algorithm and visualize population dynamics and best candidate.
+            """
+        )
+    algorithm = st.selectbox("Algorithm", available_algorithms)
+    function = st.selectbox("Function", available_functions)
+    colorscale = st.selectbox("Color Scale", colorscales)
+
+    col_fun1, col_fun2 = st.columns(2)
+    with col_fun1:
+        reverse = st.checkbox(
+            "Reverse function?",
+            value=False,
+            help="Flip sign (f(x) -> -f(x)). [This affects both visualization and function evaluation.]",
+        )
+    with col_fun2:
+        minimize = st.checkbox(
+            "Minimize?",
+            value=True,
+            help="If checked the algorithm searches minimum; otherwise it maximizes. Does not change the plotted surface.",
+        )
 
 if algorithm and function:
-    reverse = st.checkbox("Reverse Function?", value=True)
+    st.subheader(f"Function: {function}")
     func_obj = Function(function, reverse=reverse)
-    fig = func_obj.plot(
-        bounds=func_obj.bounds,
-        dim=2,
-        num_points=100,
-        mode="surface",
-        colorscale=colorscale,
-    )
-    st.plotly_chart(fig)
+    st.latex(func_obj.formula())
+    plot_container = st.empty()
+
+    # Config que define cuándo recalcular la figura base
+    function_config = (function, reverse, colorscale)
+    if (
+        "function_fig" not in st.session_state
+        or "function_config" not in st.session_state
+        or st.session_state["function_config"] != function_config
+    ):
+        # Recalcular figura base SIN mejor individuo (no depende de params GA)
+        base_fig = func_obj.plot(
+            bounds=func_obj.bounds,
+            dim=2,
+            num_points=100,
+            mode="surface",
+            colorscale=colorscale,
+        )
+        base_fig.update_layout(title="")
+        st.session_state["function_fig"] = base_fig
+        st.session_state["function_config"] = function_config
+
+    # Mostrar (si hay best y ya se corrió, la figura se actualizará tras Run)
+    plot_container.plotly_chart(st.session_state["function_fig"])
 
     st.subheader(f"Parameters of {algorithm}")
 
     if algorithm == "Genetic Algorithm":
-        population_size = st.number_input(
-            "Population Size", min_value=10, max_value=10000, value=100
+        st.caption(
+            "Configure GA parameters: precision controls binary resolution; elitism preserves top individuals."
         )
-        mutation_rate = st.slider(
-            "Mutation Rate", min_value=0.0, max_value=1.0, value=0.1
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            population_size = st.number_input(
+                "Population Size", min_value=10, max_value=50000, value=200, step=10
+            )
+            generations = st.number_input(
+                "Generations", min_value=1, max_value=20000, value=200, step=10
+            )
+        with col2:
+            mutation_rate = st.slider(
+                "Mutation Rate", min_value=0.0, max_value=1.0, value=0.05, step=0.01
+            )
+            crossover_rate = st.slider(
+                "Crossover Rate", min_value=0.0, max_value=1.0, value=0.8, step=0.01
+            )
+        with col3:
+            encoding = st.selectbox("Encoding", ["binary", "real"], index=0)
+            precision = st.number_input(
+                "Precision (dec)",
+                min_value=1,
+                max_value=10,
+                value=3,
+                help="Desired decimal precision for binary encoding",
+            )
+        elitism_option = st.selectbox(
+            "Elitism",
+            options=["None", 0.1, 0.3, 1.0],
+            index=0,
+            help="Fraction of population preserved. 1.0 = full population (no evolutionary change).",
         )
-        crossover_rate = st.slider(
-            "Crossover Rate", min_value=0.0, max_value=1.0, value=0.7
-        )
-        encoding = "binary"
+        elitism_fraction = None if elitism_option == "None" else float(elitism_option)
+
+        selection_function = selection.roulette
+        crossover_function = crossover.onepoint
         mutation_function = (
             mutation.flip_bit if encoding == "binary" else mutation.gaussian
-        )
-        generations = st.number_input(
-            "Generations", min_value=1, max_value=10000, value=100
         )
 
         ga = GeneticAlgorithm(
             fitness_function=func_obj,
-            crossover_function=crossover.onepoint,
+            crossover_function=crossover_function,
             mutation_function=mutation_function,
-            selection_function=selection.roulette,
+            selection_function=selection_function,
             population_size=population_size,
             mutation_rate=mutation_rate,
             crossover_rate=crossover_rate,
             encoding=encoding,
             bounds=func_obj.bounds,
-            binary_precision=3,
+            precision=precision,
             minimize=minimize,
+            elitism=elitism_fraction,
         )
-
         st.session_state["ga"] = ga
+        st.caption(
+            f"GA => pop:{population_size} gens:{generations} mut:{mutation_rate} cross:{crossover_rate} enc:{encoding} prec:{precision} elitism:{elitism_option} minimize:{minimize}"
+        )
 
     run = st.button(f"Run {algorithm}")
 
@@ -74,7 +147,10 @@ if algorithm and function:
 
         if "ga" in st.session_state:
             ga = st.session_state["ga"]
-            pop_history = ga.run(generations=generations, history=True)
+            with st.spinner(f"Running GA for {generations} generations..."):
+                pop_history = ga.run(
+                    generations=generations, history=True, verbose=False
+                )
             best = ga.best_individual.reshape(1, -1)
             st.session_state["pop_history"] = pop_history
             st.session_state["best"] = best
@@ -82,25 +158,24 @@ if algorithm and function:
 
             st.write(f"Best Individual: {st.session_state['best']}")
             st.write(f"Best Fitness: {st.session_state['best_fitness']}")
-            # contour = func_obj.plot(bounds=func_obj.bounds, dim=2, num_points=100, mode='contour', population=st.session_state['best'])
-            surface = func_obj.plot(
+            # Solo ahora actualizamos la figura con el best
+            updated_fig = func_obj.plot(
                 bounds=func_obj.bounds,
                 dim=2,
                 num_points=100,
                 mode="surface",
-                population=st.session_state["best"],
                 colorscale=colorscale,
+                population=st.session_state["best"],
             )
-            # st.plotly_chart(contour)
-            st.plotly_chart(surface)
+            updated_fig.update_layout(title="")
+            st.session_state["function_fig"] = updated_fig
+            plot_container.plotly_chart(updated_fig)
 
         else:
             st.warning("Please configure the algorithm before running it.")
             st.stop()
 
         if "pop_history" in st.session_state:
-            st.subheader(f"Steps of {algorithm}")
-
             if len(func_obj.bounds) == 2:
                 pop_history = st.session_state["pop_history"]
                 contour_fig = func_obj.plot(
@@ -119,7 +194,7 @@ if algorithm and function:
                         y=[ind[1] for ind in gen],
                         mode="markers",
                         marker=dict(color="white", size=4, opacity=0.9),
-                        name=f"Population Epoch {gen_idx + 1}",
+                        name=f"Population Generation {gen_idx + 1}",
                     )
                     frame = go.Frame(
                         data=list(contour_fig.data) + [scatter], name=str(gen_idx + 1)
@@ -148,7 +223,7 @@ if algorithm and function:
                         y=[ind[1] for ind in pop_history[0]],
                         mode="markers",
                         marker=dict(color="red", size=8, opacity=0.7),
-                        name="Population Epoch 1",
+                        name="Population Generation 1",
                     )
                 )
 
@@ -218,7 +293,7 @@ if algorithm and function:
                         y=0,
                         currentvalue=dict(
                             font=dict(size=16),
-                            prefix="Epoch: ",
+                            prefix="Generation: ",
                             visible=True,
                             xanchor="right",
                         ),
