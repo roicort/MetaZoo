@@ -2,7 +2,6 @@
 
 import numpy as np
 import plotly.graph_objects as go
-import plotly.io as pio
 
 class Function:
     """
@@ -365,7 +364,6 @@ class Function:
             A Plotly Figure object.
         """
 
-        pio.renderers.default = 'notebook'
         metadata = getattr(self, 'metadata', {}).get(self.__name__, None)
         title = f'${{\\text{{{self.__name__.capitalize()} function }}:{metadata["formula"]}}}$' if metadata else f'{self.__name__.capitalize()} function'
         subtitle = f'Bounds: {bounds}' if bounds else ""
