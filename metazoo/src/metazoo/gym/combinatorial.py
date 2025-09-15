@@ -476,7 +476,7 @@ class NQueens:
                         x=[col],
                         y=[row],
                         mode="markers",
-                        marker=dict(size=40, color="black", symbol="x"),
+                        marker=dict(size=100/self.n + 1, color="black", symbol="x"),
                         name="Queen",
                     )
                 )
