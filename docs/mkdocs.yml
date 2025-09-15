@@ -31,9 +31,11 @@ nav:
       - Mono: gym/mono.md
   - PettingZoo: pettingzoo.md
   - Playgrounds:
-    - Elitismo (es): assets/Elitismo.ipynb
-    - Algoritmo Genético y Funciones de prueba (es): assets/Functions.ipynb
-    - Genetic Algorithm Example (en): assets/GA.ipynb
+    - Continuous Example: assets/notebooks/GA-Simple.ipynb
+    - TSP Example: assets/notebooks/GA-TSP.ipynb
+    - NQueens Example: assets/notebooks/GA-NQueens.ipynb
+    - Tarea 1: assets/notebooks/Tarea1.ipynb
+    - Tarea 2: assets/notebooks/Tarea2.ipynb
 plugins:
   - search
   - mkdocs-jupyter:
