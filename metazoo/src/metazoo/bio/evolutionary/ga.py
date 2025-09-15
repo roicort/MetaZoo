@@ -177,16 +177,21 @@ class GeneticAlgorithm:
             pop_history = [[self.population.encoding.decode(ind) for ind in gen] for gen in pop_history]
             return pop_history
 
-    def fitness_plot(self) -> None:
-        fig = px.line(
-            y=np.array(self.fitness_history),
-            labels={"x": "Generation", "y": "Fitness"},
-            title="Fitness History",
-        )
-        fig.show()
-        fig = px.line(
-            y=np.array(self.best_history),
-            labels={"x": "Generation", "y": "Best Fitness"},
-            title="Best Fitness History",
-        )
-        fig.show()
+    def fitness_plot(self, best=False) -> None:
+        if self.fitness_history:
+            if not best:
+                fig = px.line(
+                    y=np.array(self.fitness_history),
+                    labels={"x": "Generation", "y": "Fitness"},
+                    title="Fitness History",
+                )
+                return fig
+            else:
+                fig = px.line(
+                    y=np.array(self.best_history),
+                    labels={"x": "Generation", "y": "Best Fitness"},
+                    title="Best Fitness History",
+                )
+                return fig 
+        else:
+            raise ValueError("No fitness history to plot. Run the algorithm first.")
