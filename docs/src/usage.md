@@ -4,10 +4,13 @@ Here is a basic example of how to use MetaZoo:
 
 ```python
 from metazoo.bio.evolutionary.ga import GeneticAlgorithm
+from metazoo.bio.evolutionary.utils import encoding
 
 # Create a Genetic Algorithm instance
-ag = GeneticAlgorithm(...)
-result = ag.run()
+encoder = encoding.Binary(...)
+
+ag = GeneticAlgorithm(encoder=encoder, ...)
+result = ag.run(...)
 print(result)
 ```
 

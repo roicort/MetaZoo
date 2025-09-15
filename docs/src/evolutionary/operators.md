@@ -14,9 +14,15 @@ This process is inspired by biological reproduction and is crucial for introduci
 
 Common crossover techniques include:
 
+For parametric problems:
+
 ::: metazoo.bio.evolutionary.operators.crossover.onepoint
 ::: metazoo.bio.evolutionary.operators.crossover.two_point_crossover
 ::: metazoo.bio.evolutionary.operators.crossover.k_points_crossover
+
+For permutation-based representations:
+
+::: metazoo.bio.evolutionary.operators.crossover.PMX
 
 ## Mutation
 
@@ -24,8 +30,14 @@ Mutation operators introduce random changes to individual solutions, helping to 
 
 Common mutation techniques include:
 
+For parametric problems:
+
 ::: metazoo.bio.evolutionary.operators.mutation.gaussian
 ::: metazoo.bio.evolutionary.operators.mutation.flip_bit
+
+For permutation-based representations:
+
+::: metazoo.bio.evolutionary.operators.mutation.swap
 
 ## Selection
 

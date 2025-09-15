@@ -26,6 +26,7 @@ nav:
         - Overview: evolutionary.md
         - Genetic Algorithm: ga.md
         - Operators: evolutionary/operators.md
+        - Utils: evolutionary/utils.md
     - Gym:
       - Overview: gym.md
       - Mono: gym/mono.md
@@ -36,6 +37,7 @@ nav:
     - NQueens Example: assets/notebooks/GA-NQueens.ipynb
     - Tarea 1: assets/notebooks/Tarea1.ipynb
     - Tarea 2: assets/notebooks/Tarea2.ipynb
+    - Tarea 3: assets/notebooks/Tarea3.ipynb
 plugins:
   - search
   - mkdocs-jupyter:
