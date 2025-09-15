@@ -11,7 +11,7 @@ class TSP:
 
     def __init__(self, coords=None, optimal_value=None, optimal_tour=None, distance_matrix=None, name="TSP"):
         self.coords = coords
-        self.dimension = len(coords) if coords is not None else 0
+        self.dimension = len(coords) if coords is not None else distance_matrix.shape[0] if distance_matrix is not None else ValueError("Either coords or distance_matrix must be provided.")
         self.optimal_value = optimal_value
         self.optimal_tour = optimal_tour if optimal_tour is not None else []
         self.__name__ = name
@@ -392,6 +392,7 @@ class Eil76(TSP):
 class TSP:
     Berlin52 = Berlin52
     Eil76 = Eil76
+    Custom = TSP 
 
     @classmethod
     def available_problems(cls):
