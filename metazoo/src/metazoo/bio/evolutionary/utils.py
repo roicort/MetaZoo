@@ -12,6 +12,10 @@ class Encoding(ABC):
         pass
 
 class Binary(Encoding):
+    """
+    Solves real-valued problems using binary encoding.
+    Each variable is represented by a fixed number of bits, determined by the desired precision and the variable bounds.
+    """
     def __init__(self, precision: int = 3, bounds: Sequence[Tuple[float, float]] = None):
         self.precision = precision
         self.bounds: Sequence[Tuple[float, float]] = bounds
@@ -53,6 +57,10 @@ class Binary(Encoding):
         return np.random.randint(0, 2, size=(population_size, self.genome_length))
 
 class Real(Encoding):
+    """
+    Solves real-valued problems using real encoding.
+    Each variable is represented directly by a real number within the specified bounds.
+    """
     def __init__(self, bounds: Sequence[Tuple[float, float]] = None):
         self.bounds: Sequence[Tuple[float, float]] = bounds
         if bounds is None:
@@ -70,8 +78,11 @@ class Real(Encoding):
         return arr
 
 class Permutation(Encoding):
+    """
+    Solves combinatorial problems using permutation encoding.
+    Each individual is represented as a permutation of integers from 0 to n-1, where n is the size of the permutation.
+    """
     def __init__(self, permutation_size: int):
-        self.permutation_size = permutation_size
         self.genome_length = permutation_size
 
     def decode(self, individual: np.ndarray) -> np.ndarray:
@@ -79,6 +90,7 @@ class Permutation(Encoding):
 
     def encode(self, population_size: int) -> np.ndarray:
         return np.array([np.random.permutation(self.genome_length) for _ in range(population_size)])
+
 
 class encoding:
     Binary = Binary
