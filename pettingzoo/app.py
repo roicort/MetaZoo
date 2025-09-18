@@ -2,9 +2,6 @@
 # Imports -------------------------------------------------------------------------------------------
 
 import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
 import plotly.express as px
 
 from metazoo.bio.evolutionary import GeneticAlgorithm
@@ -32,6 +29,11 @@ precision = None
 crossover_options = []
 mutation_options = []
 
+def _clear_results():
+    for k in ["pop_history", "best_history", "best", "best_fitness"]:
+        if k in st.session_state:
+            del st.session_state[k]
+
 # Sidebar -------------------------------------------------------------------------------------------
 
 with st.sidebar:
@@ -46,45 +48,51 @@ with st.sidebar:
             Select a function, tune GA parameters, run the algorithm and visualize population dynamics and best candidate.
             """
         )
-    algorithm = st.selectbox("Algorithm", available_algorithms)
+    algorithm = st.selectbox("Algorithm", available_algorithms, key="algorithm_select", on_change=_clear_results)
     problem_type = st.selectbox(
         "Type",
         ["Parametric", "Combinatorial"],
         index=0,
         help="Parametric: continuous or discrete variables; Combinatorial: permutations or combinations.",
+        key="ptype_select",
+        on_change=_clear_results
     )
 
     if problem_type == "Combinatorial":
-        problem_options = st.selectbox("Problem", ["TSP", "NQueens"], index=0)
+        problem_options = st.selectbox("Problem", ["TSP", "NQueens"], index=0, key="poptions_select", on_change=_clear_results)
         if problem_options == "TSP":
-            problem = st.selectbox("Problem", ["Berlin52"], index=0)
+            problem = st.selectbox("Problem", ["Berlin52"], index=0, key="ptsp_select", on_change=_clear_results)
             minimize = True  
         if problem_options == "NQueens":
-            problem = st.select_slider("Problem", options=[4, 8, 12, 16, 32, 64], value=8)
+            problem = st.select_slider("Problem", options=[4, 8, 12, 16, 32, 64], value=8, key="pnq_select", on_change=_clear_results)
             minimize = False # We maximize the number of non-attacking pairs
 
         if algorithm == "Genetic Algorithm":
-            encoding_type = st.selectbox("Encoding", ["permutation"], index=0)
+            encoding_type = st.selectbox("Encoding", ["permutation"], index=0, key="enc_comb_select", on_change=_clear_results)
             crossover_options = ["pmx"]
             mutation_options = ["swap"]
 
     if problem_type == "Parametric":
-        problem = st.selectbox("Function", Function().available_functions)
+        problem = st.selectbox("Function", Function().available_functions, key="func_select", on_change=_clear_results)
         reverse = st.checkbox(
             "Reverse function?",
             value=False,
             help="Flip sign (f(x) -> -f(x)). [This affects both visualization and function evaluation.]",
+            key="rev_select",
+            on_change=_clear_results
         )
 
         minimize = st.checkbox(
             "Minimize?",
             value=True,
             help="If checked the algorithm searches minimum; otherwise it maximizes. Does not change the plotted surface.",
+            key="min_select",
+            on_change=_clear_results
         )
 
         if algorithm == "Genetic Algorithm":
-            encoding_type = st.selectbox("Encoding", ["binary", "real"], index=0)
-            colorscale = st.selectbox("Color Scale", colorscales)
+            encoding_type = st.selectbox("Encoding", ["binary", "real"], index=0, key="enc_param_select", on_change=_clear_results)
+            colorscale = st.selectbox("Color Scale", colorscales, key="color_select", on_change=_clear_results)
             crossover_options = ["onepoint"]
             if encoding_type == "binary":
                 mutation_options = ["bitflip"]
@@ -92,6 +100,8 @@ with st.sidebar:
                     "Precision (bits)",
                     options=[2, 4, 8, 16],
                     help="Number of bits per variable for binary encoding.",
+                    key="prec_select",
+                    on_change=_clear_results
                 )
             if encoding_type == "real":
                 mutation_options = ["gaussian"]
@@ -245,6 +255,11 @@ if run and algorithm == "Genetic Algorithm":
     if selection_function == "uniform":
         selection_function = selection.uniform
 
+    st.session_state["pop_history"] = None
+    st.session_state["best_history"] = None
+    st.session_state["best"] = None
+    st.session_state["best_fitness"] = None
+
     ga = GeneticAlgorithm(
         fitness_function=func_obj,
         crossover_function=crossover_function,
@@ -281,25 +296,29 @@ if run and algorithm == "Genetic Algorithm":
 
         st.rerun()
 
-if "pop_history" in st.session_state and "best_history" in st.session_state:
-    st.subheader(f"Results of {algorithm}")
 
-    st.write(f"Best Individual: {st.session_state['best']}")
-    st.write(f"Best Fitness: {st.session_state['best_fitness']}")
+if "pop_history" in st.session_state and "best_history" in st.session_state and not run:
+    if st.session_state["pop_history"] is not None and st.session_state["best_history"] is not None:
+        with st.spinner(f"Displaying results of {algorithm}..."):
+            st.subheader(f"Results of {algorithm}")
 
-    if problem_type == "Parametric" and len(func_obj.bounds) == 2:
-        film = parametric_population_history(
-            st.session_state["pop_history"],
-            func_obj,
-            colorscale=colorscale,
-            best=best,
-        )
-        st.plotly_chart(film, use_container_width=True)
+            st.write(f"Best Individual: {st.session_state['best']}")
+            st.write(f"Best Fitness: {st.session_state['best_fitness']}")
 
-    if problem_type == "Combinatorial":
-        film = combinatorial_population_history(
-            st.session_state["best_history"],
-            func_obj,
-            best=st.session_state["best"][0],
-        )
-        st.plotly_chart(film, use_container_width=True)
+            if problem_type == "Parametric" and len(func_obj.bounds) == 2:
+                film = parametric_population_history(
+                    st.session_state["pop_history"],
+                    func_obj,
+                    colorscale=colorscale,
+                    best=best,
+                )
+                st.plotly_chart(film, use_container_width=True)
+
+            if problem_type == "Combinatorial":
+                film = combinatorial_population_history(
+                    st.session_state["best_history"],
+                    func_obj,
+                    best=st.session_state["best"][0],
+                )
+                st.plotly_chart(film, use_container_width=True)
+
