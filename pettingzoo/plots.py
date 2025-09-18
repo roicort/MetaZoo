@@ -130,7 +130,7 @@ def parametric_population_history(pop_history, func_obj, colorscale, best=None):
 
 
 def combinatorial_population_history(pop_history, combinatorial_obj, best=None):
-    base_fig = combinatorial_obj.plot(solution=None, attacks=False)
+    base_fig = combinatorial_obj.plot(solution=None)
     data = list(base_fig.data)
 
     if pop_history:

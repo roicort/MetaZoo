@@ -1,3 +1,6 @@
+
+# Imports -------------------------------------------------------------------------------------------
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -11,6 +14,8 @@ from metazoo.gym.combinatorial import TSP, NQueens
 from metazoo.bio.evolutionary.utils import encoding
 
 from plots import parametric_population_history, combinatorial_population_history
+
+# Vars -------------------------------------------------------------------------------------------
 
 available_algorithms = ["Genetic Algorithm"]
 colorscales = px.colors.named_colorscales()
@@ -26,6 +31,8 @@ encoding_type = None
 precision = None
 crossover_options = []
 mutation_options = []
+
+# Sidebar -------------------------------------------------------------------------------------------
 
 with st.sidebar:
     st.title("Petting Zoo")
@@ -89,6 +96,8 @@ with st.sidebar:
             if encoding_type == "real":
                 mutation_options = ["gaussian"]
 
+# Main -------------------------------------------------------------------------------------------
+
 st.subheader(f"Problem: {problem} ({problem_type})")
 
 if problem_type == "Parametric":
@@ -109,23 +118,34 @@ if problem_type == "Combinatorial":
         func_obj = NQueens(n=problem)
         encoder = encoding.Permutation(permutation_size=func_obj.n)
 
+# Plots -------------------------------------------------------------------------------------------
+
 if problem_type == "Parametric" and len(func_obj.bounds) == 2:
     st.latex(f"{func_obj.formula()}")
-    fig = func_obj.plot(func_obj.bounds, dim=2, num_points=100, population=None, mode='surface', colorscale='Viridis')
-    fig.update_layout(title="Function Landscape with Best Individual", autosize=True)
+    best = st.session_state["best"] if "best" in st.session_state else None
+    fig = func_obj.plot(
+        func_obj.bounds,
+        dim=2,
+        num_points=100,
+        population=best,
+        mode='surface',
+        colorscale=colorscale if 'colorscale' in locals() else 'Viridis'
+    )
+    fig.update_layout(title="", autosize=True)
     st.plotly_chart(fig, use_container_width=True)
-
 if problem_type == "Combinatorial":
     if problem_options == "NQueens":
-        st.latex(f"Objective: Minimize number of attacking pairs of queens.")
-        fig = func_obj.plot(solution=None, attacks=None)
-        fig.update_layout(title="N-Queens Board with Best Individual", autosize=True)
+        #st.latex(f"Objective: Minimize number of attacking pairs of queens.")
+        best = st.session_state["best"][0] if "best" in st.session_state else None
+        fig = func_obj.plot(solution=best, attacks=True if best is not None else False)
         st.plotly_chart(fig, use_container_width=True)
     if problem_options == "TSP":
-        st.latex(f"Objective: Minimize total travel distance.")
-        fig = func_obj.plot(solution=None, show_optimal=True)
-        fig.update_layout(title="TSP Route with Best Individual", autosize=True)
+        #st.latex(f"Objective: Minimize total travel distance.")
+        best = list(st.session_state["best"][0]) if "best" in st.session_state else None
+        fig = func_obj.plot(solution=best, show_optimal=True)
         st.plotly_chart(fig, use_container_width=True)
+
+# Algorithms -------------------------------------------------------------------------------------------
 
 st.subheader(f"Parameters of {algorithm}")
 
@@ -183,6 +203,8 @@ if algorithm == "Genetic Algorithm":
             help="Fraction of population preserved. 1.0 = full population (no evolutionary change).",
         )
         elitism_fraction = None if elitism_option == "None" else float(elitism_option)
+
+# Runs -------------------------------------------------------------------------------------------
 
 run = st.button(f"Run {algorithm}")
 
@@ -244,33 +266,40 @@ if run and algorithm == "Genetic Algorithm":
     st.subheader(f"Results of {algorithm}")
 
     if "ga" in st.session_state:
-        ga = st.session_state["ga"]
         with st.spinner(f"Running GA for {generations} generations..."):
+            ga = st.session_state["ga"]
             best_history, pop_history = ga.run(
                 generations=generations, history=True, verbose=False
             )
-        best = ga.best_individual.reshape(1, -1)
-        st.session_state["pop_history"] = pop_history
-        st.session_state["best_history"] = best_history
-        st.session_state["best"] = best
-        st.session_state["best_fitness"] = ga.best_fitness
 
-        st.write(f"Best Individual: {st.session_state['best']}")
-        st.write(f"Best Fitness: {st.session_state['best_fitness']}")
+            best = ga.best_individual.reshape(1, -1)
 
-        if problem_type == "Parametric" and len(func_obj.bounds) == 2:
-            film = parametric_population_history(
-                pop_history,
-                func_obj,
-                colorscale=colorscale,
-                best=best,
-            )
-            st.plotly_chart(film, use_container_width=True)
+            st.session_state["pop_history"] = pop_history
+            st.session_state["best_history"] = best_history
+            st.session_state["best"] = best
+            st.session_state["best_fitness"] = ga.best_fitness
 
-        if problem_type == "Combinatorial":
-            film = combinatorial_population_history(
-                best_history,
-                func_obj,
-                best=best[0],
-            )
-            st.plotly_chart(film, use_container_width=True)
+        st.rerun()
+
+if "pop_history" in st.session_state and "best_history" in st.session_state:
+    st.subheader(f"Results of {algorithm}")
+
+    st.write(f"Best Individual: {st.session_state['best']}")
+    st.write(f"Best Fitness: {st.session_state['best_fitness']}")
+
+    if problem_type == "Parametric" and len(func_obj.bounds) == 2:
+        film = parametric_population_history(
+            st.session_state["pop_history"],
+            func_obj,
+            colorscale=colorscale,
+            best=best,
+        )
+        st.plotly_chart(film, use_container_width=True)
+
+    if problem_type == "Combinatorial":
+        film = combinatorial_population_history(
+            st.session_state["best_history"],
+            func_obj,
+            best=st.session_state["best"][0],
+        )
+        st.plotly_chart(film, use_container_width=True)

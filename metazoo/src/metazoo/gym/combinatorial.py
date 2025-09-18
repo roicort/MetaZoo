@@ -482,7 +482,7 @@ class NQueens:
                     )
                 )
         # Attacks
-        if attacks:
+        if solution is not None and attacks:
             for (col1, col2) in self.attacks(solution):
                 row1 = solution[col1]
                 row2 = solution[col2]
