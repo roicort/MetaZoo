@@ -304,6 +304,9 @@ if "pop_history" in st.session_state and "best_history" in st.session_state and 
 
             st.write(f"Best Individual: {st.session_state['best']}")
             st.write(f"Best Fitness: {st.session_state['best_fitness']}")
+            if problem_options == "TSP":
+                st.write(f"Best Known Fitness: {func_obj.optimal_value}")
+                st.write(f"Difference from Best Known: {st.session_state['best_fitness'] - func_obj.optimal_value}")
 
             if problem_type == "Parametric" and len(func_obj.bounds) == 2:
                 film = parametric_population_history(
