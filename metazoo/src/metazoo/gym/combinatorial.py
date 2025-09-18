@@ -481,20 +481,20 @@ class NQueens:
                         name="Queen",
                     )
                 )
-        # Attacks
-        if solution is not None and attacks:
-            for (col1, col2) in self.attacks(solution):
-                row1 = solution[col1]
-                row2 = solution[col2]
-                fig.add_trace(
-                    go.Scatter(
-                        x=[col1, col2],
-                        y=[row1, row2],
-                        mode="lines",
-                        line=dict(color="red", width=4),
-                        name="Attack",
+            # Attacks
+            if attacks:
+                for (col1, col2) in self.attacks(solution):
+                    row1 = solution[col1]
+                    row2 = solution[col2]
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[col1, col2],
+                            y=[row1, row2],
+                            mode="lines",
+                            line=dict(color="red", width=4),
+                            name="Attack",
+                        )
                     )
-                )
         fig.update_layout(
             title=f"{self.n}-Queens",
             xaxis=dict(
