@@ -7,13 +7,23 @@ import plotly.express as px
 from metazoo.bio.evolutionary import GeneticAlgorithm
 from metazoo.bio.evolutionary.operators import selection, mutation, crossover
 from metazoo.gym.mono import Function
+from metazoo.gym.combinatorial import TSP, NQueens
+from metazoo.bio.evolutionary.utils import encoding
 
 available_algorithms = ["Genetic Algorithm"]
-available_functions = Function().available_functions
 colorscales = px.colors.named_colorscales()
 
 st.set_page_config(page_title="Petting Zoo", layout="wide")
 st.title("Petting Zoo")
+
+problem_options = None
+problem = None
+algorithm = None
+problem_type = None
+encoding_type = None
+precision = None
+crossover_options = []
+mutation_options = []
 
 with st.sidebar:
     st.title("Petting Zoo")
@@ -21,92 +31,147 @@ with st.sidebar:
     with st.expander("About", expanded=False):
         st.markdown(
             """
-**Petting Zoo** is an interactive playground to experiment with optimization & evolutionary algorithms on analytic test functions.
-
-It is powered by the **MetaZoo** library (core evolutionary / gym components).
-
-Repo: [MetaZoo on GitHub](https://github.com/roicort/MetaZoo)
-
-Select a function, tune GA parameters, run the algorithm and visualize population dynamics and best candidate.
+            **Petting Zoo** is an interactive playground to experiment with optimization & evolutionary algorithms on analytic test functions.
+            It is powered by the **MetaZoo** library (core evolutionary / gym components).
+            Repo: [MetaZoo on GitHub](https://github.com/roicort/MetaZoo)
+            Select a function, tune GA parameters, run the algorithm and visualize population dynamics and best candidate.
             """
         )
     algorithm = st.selectbox("Algorithm", available_algorithms)
-    function = st.selectbox("Function", available_functions)
-    colorscale = st.selectbox("Color Scale", colorscales)
+    problem_type = st.selectbox(
+        "Type",
+        ["Parametric", "Combinatorial"],
+        index=0,
+        help="Parametric: continuous or discrete variables; Combinatorial: permutations or combinations.",
+    )
 
-    col_fun1, col_fun2 = st.columns(2)
-    with col_fun1:
+    if problem_type == "Combinatorial":
+        problem_options = st.selectbox("Problem", ["TSP", "NQueens"], index=0)
+        if problem_options == "TSP":
+            problem = st.selectbox("Problem", ["Berlin52"], index=0)
+        if problem_options == "NQueens":
+            problem = st.select_slider("Problem", options=[4, 8, 12, 16, 32, 64], value=8)
+
+        if algorithm == "Genetic Algorithm":
+            encoding_type = st.selectbox("Encoding", ["permutation"], index=0)
+            crossover_options = ["pmx"]
+            mutation_options = ["swap"]
+
+    if problem_type == "Parametric":
+        problem = st.selectbox("Function", Function().available_functions)
         reverse = st.checkbox(
             "Reverse function?",
             value=False,
             help="Flip sign (f(x) -> -f(x)). [This affects both visualization and function evaluation.]",
         )
-    with col_fun2:
-        minimize = st.checkbox(
-            "Minimize?",
-            value=True,
-            help="If checked the algorithm searches minimum; otherwise it maximizes. Does not change the plotted surface.",
+
+        if algorithm == "Genetic Algorithm":
+            encoding_type = st.selectbox("Encoding", ["binary", "real"], index=0)
+            colorscale = st.selectbox("Color Scale", colorscales)
+            crossover_options = ["onepoint"]
+            if encoding_type == "binary":
+                mutation_options = ["bitflip"]
+                precision = st.selectbox(
+                    "Precision (bits)",
+                    options=[2, 4, 8, 16],
+                    help="Number of bits per variable for binary encoding.",
+                )
+            if encoding_type == "real":
+                mutation_options = ["gaussian"]
+
+    minimize = st.checkbox(
+        "Minimize?",
+        value=True,
+        help="If checked the algorithm searches minimum; otherwise it maximizes. Does not change the plotted surface.",
+    )
+
+st.subheader(f"Problem: {problem} ({problem_type})")
+
+if problem_type == "Parametric":
+    func_obj = Function(problem, reverse=reverse)
+    if encoding_type == "binary":
+        encoder = encoding.Binary(
+            bounds=func_obj.bounds, precision=precision
+        )
+    if encoding_type == "real":
+        encoder = encoding.Real(bounds=func_obj.bounds)
+
+if problem_type == "Combinatorial":
+    if problem_options == "TSP":
+        if problem == "Berlin52":
+            func_obj = TSP.Berlin52()
+        encoder = encoding.Permutation(permutation_size=func_obj.dimension)
+    if problem_options == "NQueens":
+        func_obj = NQueens(n=problem)
+        encoder = encoding.Permutation(permutation_size=func_obj.n)
+
+if problem_type == "Parametric" and len(func_obj.bounds) == 2:
+    st.latex(f"{func_obj.formula()}")
+    fig = func_obj.plot(func_obj.bounds, dim=2, num_points=100, population=None, mode='surface', colorscale='Viridis')
+    fig.update_layout(title="Function Landscape with Best Individual", autosize=True)
+    st.plotly_chart(fig, use_container_width=True)
+
+if problem_type == "Combinatorial":
+    if problem_options == "NQueens":
+        st.latex(f"Objective: Minimize number of attacking pairs of queens.")
+        fig = func_obj.plot(solution=None, attacks=None)
+        fig.update_layout(title="N-Queens Board with Best Individual", autosize=True)
+        st.plotly_chart(fig, use_container_width=True)
+    if problem_options == "TSP":
+        st.latex(f"Objective: Minimize total travel distance.")
+        fig = func_obj.plot(solution=None, show_optimal=True)
+        fig.update_layout(title="TSP Route with Best Individual", autosize=True)
+        st.plotly_chart(fig, use_container_width=True)
+
+st.subheader(f"Parameters of {algorithm}")
+
+if algorithm == "Genetic Algorithm":
+    st.caption(
+        "Configure GA parameters: precision controls binary resolution; elitism preserves top individuals."
+    )
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        population_size = st.number_input(
+            "Population Size", min_value=10, max_value=50000, value=200, step=10
+        )
+        generations = st.number_input(
+            "Generations", min_value=1, max_value=20000, value=200, step=10
+        )
+    with col2:
+
+        mutation_type = st.selectbox("Mutation Function", options=mutation_options)
+        mutation_rate = st.slider(
+            "Mutation Rate", min_value=0.0, max_value=1.0, value=0.05, step=0.01
         )
 
-if algorithm and function:
-    st.subheader(f"Function: {function}")
-    func_obj = Function(function, reverse=reverse)
-    st.latex(func_obj.formula())
-    plot_container = st.empty()
+    with col3:
 
-    # Config que define cuándo recalcular la figura base
-    function_config = (function, reverse, colorscale)
-    if (
-        "function_fig" not in st.session_state
-        or "function_config" not in st.session_state
-        or st.session_state["function_config"] != function_config
-    ):
-        # Recalcular figura base SIN mejor individuo (no depende de params GA)
-        base_fig = func_obj.plot(
-            bounds=func_obj.bounds,
-            dim=2,
-            num_points=100,
-            mode="surface",
-            colorscale=colorscale,
-        )
-        base_fig.update_layout(title="")
-        st.session_state["function_fig"] = base_fig
-        st.session_state["function_config"] = function_config
-
-    # Mostrar (si hay best y ya se corrió, la figura se actualizará tras Run)
-    plot_container.plotly_chart(st.session_state["function_fig"])
-
-    st.subheader(f"Parameters of {algorithm}")
-
-    if algorithm == "Genetic Algorithm":
-        st.caption(
-            "Configure GA parameters: precision controls binary resolution; elitism preserves top individuals."
+        crossover_type = st.selectbox(
+            "Crossover Function",
+            options=crossover_options,
+            index=0,
+            help="Crossover method to combine parents.",
         )
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            population_size = st.number_input(
-                "Population Size", min_value=10, max_value=50000, value=200, step=10
-            )
-            generations = st.number_input(
-                "Generations", min_value=1, max_value=20000, value=200, step=10
-            )
-        with col2:
-            mutation_rate = st.slider(
-                "Mutation Rate", min_value=0.0, max_value=1.0, value=0.05, step=0.01
-            )
-            crossover_rate = st.slider(
-                "Crossover Rate", min_value=0.0, max_value=1.0, value=0.8, step=0.01
-            )
-        with col3:
-            encoding = st.selectbox("Encoding", ["binary", "real"], index=0)
-            precision = st.number_input(
-                "Precision (dec)",
-                min_value=1,
-                max_value=10,
-                value=3,
-                help="Desired decimal precision for binary encoding",
-            )
+        crossover_rate = st.slider(
+            "Crossover Rate", min_value=0.0, max_value=1.0, value=0.8, step=0.01
+        )
+
+    with col4:
+
+        selection_function = st.selectbox(
+            "Selection Function",
+            options=[
+                "tournament",
+                "roulette",
+                "rank",
+                "uniform",
+            ],
+            index=0,
+            help="Method to select parents for reproduction.",
+        )
+
         elitism_option = st.selectbox(
             "Elitism",
             options=["None", 0.1, 0.3, 1.0],
@@ -115,192 +180,75 @@ if algorithm and function:
         )
         elitism_fraction = None if elitism_option == "None" else float(elitism_option)
 
-        selection_function = selection.roulette
-        crossover_function = crossover.onepoint
-        mutation_function = (
-            mutation.flip_bit if encoding == "binary" else mutation.gaussian
-        )
+run = st.button(f"Run {algorithm}")
 
-        ga = GeneticAlgorithm(
-            fitness_function=func_obj,
-            crossover_function=crossover_function,
-            mutation_function=mutation_function,
-            selection_function=selection_function,
-            population_size=population_size,
-            mutation_rate=mutation_rate,
-            crossover_rate=crossover_rate,
-            encoding=encoding,
-            bounds=func_obj.bounds,
-            precision=precision,
-            minimize=minimize,
-            elitism=elitism_fraction,
-        )
-        st.session_state["ga"] = ga
-        st.caption(
-            f"GA => pop:{population_size} gens:{generations} mut:{mutation_rate} cross:{crossover_rate} enc:{encoding} prec:{precision} elitism:{elitism_option} minimize:{minimize}"
-        )
+if run and algorithm == "Genetic Algorithm":
 
-    run = st.button(f"Run {algorithm}")
-
-    if run:
-        st.subheader(f"Results of {algorithm}")
-
-        if "ga" in st.session_state:
-            ga = st.session_state["ga"]
-            with st.spinner(f"Running GA for {generations} generations..."):
-                pop_history = ga.run(
-                    generations=generations, history=True, verbose=False
-                )
-            best = ga.best_individual.reshape(1, -1)
-            st.session_state["pop_history"] = pop_history
-            st.session_state["best"] = best
-            st.session_state["best_fitness"] = ga.best_fitness
-
-            st.write(f"Best Individual: {st.session_state['best']}")
-            st.write(f"Best Fitness: {st.session_state['best_fitness']}")
-            # Solo ahora actualizamos la figura con el best
-            updated_fig = func_obj.plot(
-                bounds=func_obj.bounds,
-                dim=2,
-                num_points=100,
-                mode="surface",
-                colorscale=colorscale,
-                population=st.session_state["best"],
+    if problem_type == "Parametric":
+        if encoding_type == "binary":
+            encoder = encoding.Binary(
+                bounds=func_obj.bounds, precision=precision
             )
-            updated_fig.update_layout(title="")
-            st.session_state["function_fig"] = updated_fig
-            plot_container.plotly_chart(updated_fig)
+        if encoding_type == "real":
+            encoder = encoding.Real(bounds=func_obj.bounds)
+    
+    if problem_type == "Combinatorial":
+        if problem_options == "TSP":
+            encoder = encoding.Permutation(permutation_size=func_obj.dimension)
+        if problem_options == "NQueens":
+            encoder = encoding.Permutation(permutation_size=func_obj.n)
 
-        else:
-            st.warning("Please configure the algorithm before running it.")
-            st.stop()
+    if mutation_type == "bitflip":
+        mutation_function = mutation.flip_bit
+    if mutation_type == "gaussian":
+        mutation_function = mutation.gaussian
+    if mutation_type == "swap":
+        mutation_function = mutation.swap
 
-        if "pop_history" in st.session_state:
-            if len(func_obj.bounds) == 2:
-                pop_history = st.session_state["pop_history"]
-                contour_fig = func_obj.plot(
-                    bounds=func_obj.bounds,
-                    dim=2,
-                    num_points=100,
-                    mode="contour",
-                    colorscale=colorscale,
-                )
+    if crossover_type == "onepoint":
+        crossover_function = crossover.onepoint
+    if crossover_type == "pmx":
+        crossover_function = crossover.PMX
 
-                frames = []
+    if selection_function == "tournament":
+        selection_function = selection.tournament
+    if selection_function == "roulette":
+        selection_function = selection.roulette
+    if selection_function == "rank":
+        selection_function = selection.rank
+    if selection_function == "uniform":
+        selection_function = selection.uniform
 
-                for gen_idx, gen in enumerate(pop_history):
-                    scatter = go.Scatter(
-                        x=[ind[0] for ind in gen],
-                        y=[ind[1] for ind in gen],
-                        mode="markers",
-                        marker=dict(color="white", size=4, opacity=0.9),
-                        name=f"Population Generation {gen_idx + 1}",
-                    )
-                    frame = go.Frame(
-                        data=list(contour_fig.data) + [scatter], name=str(gen_idx + 1)
-                    )
-                    frames.append(frame)
+    ga = GeneticAlgorithm(
+        fitness_function=func_obj,
+        crossover_function=crossover_function,
+        mutation_function=mutation_function,
+        selection_function=selection_function,
+        population_size=population_size,
+        mutation_rate=mutation_rate,
+        crossover_rate=crossover_rate,
+        encoder=encoder,
+        minimize=minimize,
+        elitism=elitism_fraction,
+    )
+    st.session_state["ga"] = ga
+    st.session_state["func"] = func_obj
+    st.caption(
+        f"GA => pop:{population_size} gens:{generations} mut:{mutation_rate} cross:{crossover_rate} enc:{encoding_type} elitism:{elitism_option} minimize:{minimize}"
+    )
 
-                final_frame = go.Frame(
-                    data=list(contour_fig.data)
-                    + [
-                        go.Scatter(
-                            x=[ind[0] for ind in st.session_state["best"]],
-                            y=[ind[1] for ind in st.session_state["best"]],
-                            mode="markers",
-                            marker=dict(color="blue", size=20, opacity=1),
-                            name="Best Individual",
-                        )
-                    ],
-                    name="Final",
-                )
-                frames.append(final_frame)
+    st.subheader(f"Results of {algorithm}")
 
-                data = list(contour_fig.data)
-                data.append(
-                    go.Scatter(
-                        x=[ind[0] for ind in pop_history[0]],
-                        y=[ind[1] for ind in pop_history[0]],
-                        mode="markers",
-                        marker=dict(color="red", size=8, opacity=0.7),
-                        name="Population Generation 1",
-                    )
-                )
+    if "ga" in st.session_state:
+        ga = st.session_state["ga"]
+        with st.spinner(f"Running GA for {generations} generations..."):
+            pop_history = ga.run(
+                generations=generations, history=True, verbose=False
+            )
+        best = ga.best_individual.reshape(1, -1)
+        st.session_state["pop_history"] = pop_history
+        st.session_state["best"] = best
+        st.session_state["best_fitness"] = ga.best_fitness
 
-                layout = go.Layout(
-                    xaxis=dict(
-                        range=[func_obj.bounds[0][0], func_obj.bounds[0][1]], title="X"
-                    ),
-                    yaxis=dict(
-                        range=[func_obj.bounds[1][0], func_obj.bounds[1][1]], title="Y"
-                    ),
-                    updatemenus=[
-                        dict(
-                            type="buttons",
-                            direction="down",
-                            showactive=False,
-                            y=1,
-                            x=1.1,
-                            xanchor="right",
-                            yanchor="top",
-                            pad=dict(t=0, r=10),
-                            buttons=[
-                                dict(
-                                    label="Play",
-                                    method="animate",
-                                    args=[
-                                        None,
-                                        {
-                                            "frame": {"duration": 500, "redraw": True},
-                                            "fromcurrent": True,
-                                        },
-                                    ],
-                                ),
-                                dict(
-                                    label="Pause",
-                                    method="animate",
-                                    args=[
-                                        [None],
-                                        {
-                                            "frame": {"duration": 0, "redraw": False},
-                                            "mode": "immediate",
-                                        },
-                                    ],
-                                ),
-                            ],
-                        )
-                    ],
-                )
-                sliders = [
-                    dict(
-                        steps=[
-                            dict(
-                                method="animate",
-                                args=[
-                                    [str(i + 1)],
-                                    {
-                                        "frame": {"duration": 0, "redraw": False},
-                                        "mode": "immediate",
-                                    },
-                                ],
-                                label=str(i + 1),
-                            )
-                            for i in range(len(pop_history))
-                        ],
-                        active=0,
-                        transition=dict(duration=300, easing="cubic-in-out"),
-                        x=0.1,
-                        y=0,
-                        currentvalue=dict(
-                            font=dict(size=16),
-                            prefix="Generation: ",
-                            visible=True,
-                            xanchor="right",
-                        ),
-                        len=0.9,
-                    )
-                ]
-                layout["sliders"] = sliders
-
-                fig = go.Figure(data=data, layout=layout, frames=frames)
-                st.plotly_chart(fig)
+        st.write(f"Best Individual: {st.session_state['best']}")
+        st.write(f"Best Fitness: {st.session_state['best_fitness']}")
