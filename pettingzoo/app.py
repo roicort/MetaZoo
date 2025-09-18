@@ -61,7 +61,7 @@ with st.sidebar:
     if problem_type == "Combinatorial":
         problem_options = st.selectbox("Problem", ["TSP", "NQueens"], index=0, key="poptions_select", on_change=_clear_results)
         if problem_options == "TSP":
-            problem = st.selectbox("Problem", ["Berlin52"], index=0, key="ptsp_select", on_change=_clear_results)
+            problem = st.selectbox("Problem", ["Berlin52", "Eil76"], index=0, key="ptsp_select", on_change=_clear_results)
             minimize = True  
         if problem_options == "NQueens":
             problem = st.select_slider("Problem", options=[4, 8, 12, 16, 32, 64], value=8, key="pnq_select", on_change=_clear_results)
@@ -123,6 +123,8 @@ if problem_type == "Combinatorial":
     if problem_options == "TSP":
         if problem == "Berlin52":
             func_obj = TSP.Berlin52()
+        if problem == "Eil76":
+            func_obj = TSP.Eil76()
         encoder = encoding.Permutation(permutation_size=func_obj.dimension)
     if problem_options == "NQueens":
         func_obj = NQueens(n=problem)

@@ -31,7 +31,7 @@ def two_point_crossover(parent1, parent2):
     child2 = np.concatenate([parent2[:point1], parent1[point1:point2], parent2[point2:]])
     return child1, child2
 
-def k_points_crossover(parent1, parent2, k):
+def k_points_crossover(parent1, parent2, k=3):
     """
     K-point crossover between two parents.
 
