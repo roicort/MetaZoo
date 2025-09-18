@@ -446,7 +446,7 @@ class NQueens:
                     attacks.append((i, j))
         return attacks
 
-    def plot(self, solution=None, attacks=None):
+    def plot(self, solution=None, attacks: bool = True):
         """
         Visualiza el tablero N-Queens usando plotly. El grid está centrado en 0.5 y las coordenadas de la solución se mantienen originales.
         """
@@ -477,12 +477,12 @@ class NQueens:
                         x=[col],
                         y=[row],
                         mode="markers",
-                        marker=dict(size=100/self.n + 1, color="black", symbol="x"),
+                        marker=dict(size=100/self.n + 1, color="blue", symbol="x"),
                         name="Queen",
                     )
                 )
         # Attacks
-        if attacks is not None:
+        if attacks:
             for (col1, col2) in self.attacks(solution):
                 row1 = solution[col1]
                 row2 = solution[col2]

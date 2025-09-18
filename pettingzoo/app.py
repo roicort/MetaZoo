@@ -10,6 +10,8 @@ from metazoo.gym.mono import Function
 from metazoo.gym.combinatorial import TSP, NQueens
 from metazoo.bio.evolutionary.utils import encoding
 
+from plots import parametric_population_history, combinatorial_population_history
+
 available_algorithms = ["Genetic Algorithm"]
 colorscales = px.colors.named_colorscales()
 
@@ -49,8 +51,10 @@ with st.sidebar:
         problem_options = st.selectbox("Problem", ["TSP", "NQueens"], index=0)
         if problem_options == "TSP":
             problem = st.selectbox("Problem", ["Berlin52"], index=0)
+            minimize = True  
         if problem_options == "NQueens":
             problem = st.select_slider("Problem", options=[4, 8, 12, 16, 32, 64], value=8)
+            minimize = False # We maximize the number of non-attacking pairs
 
         if algorithm == "Genetic Algorithm":
             encoding_type = st.selectbox("Encoding", ["permutation"], index=0)
@@ -63,6 +67,12 @@ with st.sidebar:
             "Reverse function?",
             value=False,
             help="Flip sign (f(x) -> -f(x)). [This affects both visualization and function evaluation.]",
+        )
+
+        minimize = st.checkbox(
+            "Minimize?",
+            value=True,
+            help="If checked the algorithm searches minimum; otherwise it maximizes. Does not change the plotted surface.",
         )
 
         if algorithm == "Genetic Algorithm":
@@ -78,12 +88,6 @@ with st.sidebar:
                 )
             if encoding_type == "real":
                 mutation_options = ["gaussian"]
-
-    minimize = st.checkbox(
-        "Minimize?",
-        value=True,
-        help="If checked the algorithm searches minimum; otherwise it maximizes. Does not change the plotted surface.",
-    )
 
 st.subheader(f"Problem: {problem} ({problem_type})")
 
@@ -242,13 +246,31 @@ if run and algorithm == "Genetic Algorithm":
     if "ga" in st.session_state:
         ga = st.session_state["ga"]
         with st.spinner(f"Running GA for {generations} generations..."):
-            pop_history = ga.run(
+            best_history, pop_history = ga.run(
                 generations=generations, history=True, verbose=False
             )
         best = ga.best_individual.reshape(1, -1)
         st.session_state["pop_history"] = pop_history
+        st.session_state["best_history"] = best_history
         st.session_state["best"] = best
         st.session_state["best_fitness"] = ga.best_fitness
 
         st.write(f"Best Individual: {st.session_state['best']}")
         st.write(f"Best Fitness: {st.session_state['best_fitness']}")
+
+        if problem_type == "Parametric" and len(func_obj.bounds) == 2:
+            film = parametric_population_history(
+                pop_history,
+                func_obj,
+                colorscale=colorscale,
+                best=best,
+            )
+            st.plotly_chart(film, use_container_width=True)
+
+        if problem_type == "Combinatorial":
+            film = combinatorial_population_history(
+                best_history,
+                func_obj,
+                best=best[0],
+            )
+            st.plotly_chart(film, use_container_width=True)

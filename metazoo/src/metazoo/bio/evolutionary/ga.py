@@ -162,20 +162,23 @@ class GeneticAlgorithm:
         self, generations: int, history: bool = False, verbose: bool = True
     ) -> list[np.ndarray]:
         pop_history = []
+        best_history = []
         if verbose:
             with Progress() as progress:
                 task = progress.add_task("Evolving...", total=generations)
                 for _ in range(generations):
                     self.evolve()
                     pop_history.append(self.population.individuals.copy())
+                    best_history.append(self.best_individual)
                     progress.advance(task)
         else:
             for _ in range(generations):
                 self.evolve()
                 pop_history.append(self.population.individuals.copy())
+                best_history.append(self.best_individual)
         if history:
             pop_history = [[self.population.encoding.decode(ind) for ind in gen] for gen in pop_history]
-            return pop_history
+            return (best_history, pop_history)
 
     def fitness_plot(self, best=False) -> None:
         if self.fitness_history:
