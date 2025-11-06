@@ -59,7 +59,7 @@ class GeneticAlgorithm:
         table.add_row("Crossover Function", self.crossover_function.__name__)
         table.add_row("Mutation Function", self.mutation_function.__name__)
         table.add_row("Fitness Function", self.fitness_function.__name__)
-        table.add_row("Dimension", str(self.dim))
+        #table.add_row("Dimension", str(self.dim))
         table.add_row(
             "Elitism", str(self.elitism) if self.elitism is not None else "None"
         )
