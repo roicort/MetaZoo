@@ -14,6 +14,9 @@ def expected_values(fitness: np.array) -> np.array:
     """
     average_fitness = np.sum(fitness)
     number_of_individuals = len(fitness)
+    if np.isclose(average_fitness, 0):
+        # If the average fitness is close to zero, assign uniform expected values
+        return np.ones_like(fitness)
     return fitness / average_fitness * number_of_individuals
 
 def roulette(population: np.ndarray, fitness: np.ndarray, shift: bool = True) -> np.ndarray:
