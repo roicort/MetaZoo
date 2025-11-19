@@ -2,8 +2,8 @@
 
 import numpy as np
 
+from metazoo.bio.evolutionary.operators import crossover, mutation
 from metazoo.bio.utils import Encoding, Permutation, Population
-from metazoo.bio.evolutionary.operators import mutation, crossover
 
 
 class DifferentialEvolution:
@@ -56,17 +56,17 @@ class DifferentialEvolution:
             idxs = [idx for idx in range(NP) if idx != i]
             a, b, c = pop[np.random.choice(idxs, 3, replace=False)]
             if isinstance(self.population.encoding, Permutation):
-                # PMX crossover entre b y c para crear el mutante
+                # PMX Crossover between b and c to create the mutant
                 mutant, _ = crossover.PMX(b.copy(), c.copy())
-                # Swap mutation sobre el mutante, usando F como tasa de mutación
+                # Swap mutation over the mutant, with F as mutation rate
                 mutant = mutation.swap(mutant, mutation_rate=self.F)
-                # Recombinación: con probabilidad CR, toma el gen del mutante, si no del padre
+                # Recombination: with probability CR, take mutant gen, otherwise take the fathers
                 cross_points = np.random.rand(D) < self.CR
                 trial = np.where(cross_points, mutant, pop[i])
-                # Asegura que trial es una permutación válida (por robustez)
-                # Si hay duplicados/faltantes, repara la permutación
+                # Validate trial
+                # Repair the mutation
                 if len(np.unique(trial)) != D:
-                    # Reparar permutación
+                    # Repair permutation
                     n = D
                     seen = set()
                     missing = [x for x in range(n) if x not in trial]
@@ -79,7 +79,7 @@ class DifferentialEvolution:
                             result.append(missing.pop(0))
                     trial = np.array(result)
             else:
-                # Ajusta límites según encoding real
+                # Adjust limits
                 if (
                     hasattr(self.population.encoding, "bounds")
                     and self.population.encoding.bounds is not None
@@ -92,7 +92,7 @@ class DifferentialEvolution:
                 if not np.any(cross_points):
                     cross_points[np.random.randint(0, D)] = True
                 trial = np.where(cross_points, mutant, pop[i])
-            # Decodifica si es necesario antes de evaluar
+            # Decode
             trial_fitness = self.fitness_function(
                 self.population.encoding.decode(trial)
             )
