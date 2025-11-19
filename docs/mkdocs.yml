@@ -24,12 +24,13 @@ nav:
           - Overview: bio.md
           - Evolutionary:
               - Overview: evolutionary.md
-              - Genetic Algorithm: ga.md
+              - Genetic Algorithm: evolutionary/ga.md
+              - Differential Evolution: evolutionary/de.md
               - Operators: evolutionary/operators.md
           - Darwin:
               - Overview: darwin.md
               - PSO: darwin/pso.md
-          - Utils: evolutionary/utils.md
+          - Utils: utils.md
       - Gym:
           - Overview: gym.md
           - Mono: gym/mono.md
