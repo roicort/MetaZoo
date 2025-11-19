@@ -4,7 +4,7 @@ Here is a basic example of how to use MetaZoo:
 
 ```python
 from metazoo.bio.evolutionary.ga import GeneticAlgorithm
-from metazoo.bio.evolutionary.utils import encoding
+from metazoo.bio.utils import encoding
 
 # Create a Genetic Algorithm instance
 encoder = encoding.Binary(...)

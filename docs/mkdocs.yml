@@ -20,24 +20,28 @@ nav:
   - Installation: installation.md
   - Usage: usage.md
   - Modules:
-    - Bio:
-      - Overview: bio.md
-      - Evolutionary:
-        - Overview: evolutionary.md
-        - Genetic Algorithm: ga.md
-        - Operators: evolutionary/operators.md
-        - Utils: evolutionary/utils.md
-    - Gym:
-      - Overview: gym.md
-      - Mono: gym/mono.md
+      - Bio:
+          - Overview: bio.md
+          - Evolutionary:
+              - Overview: evolutionary.md
+              - Genetic Algorithm: ga.md
+              - Operators: evolutionary/operators.md
+          - Darwin:
+              - Overview: darwin.md
+              - PSO: darwin/pso.md
+          - Utils: evolutionary/utils.md
+      - Gym:
+          - Overview: gym.md
+          - Mono: gym/mono.md
   - PettingZoo: pettingzoo.md
   - Playgrounds:
-    - Continuous Example: assets/notebooks/GA-Simple.ipynb
-    - TSP Example: assets/notebooks/GA-TSP.ipynb
-    - NQueens Example: assets/notebooks/GA-NQueens.ipynb
-    - Tarea 1: assets/notebooks/Tarea1.ipynb
-    - Tarea 2: assets/notebooks/Tarea2.ipynb
-    - Tarea 3: assets/notebooks/Tarea3.ipynb
+      - Continuous Example: assets/GA-Simple.ipynb
+      - TSP Example: assets/GA-TSP.ipynb
+      - NQueens Example: assets/GA-NQueens.ipynb
+      - Tarea 1: assets/Homeworks/Tarea1.ipynb
+      - Tarea 2: assets/Homeworks/Tarea2.ipynb
+      - Tarea 3: assets/Homeworks/Tarea3.ipynb
+      - Tarea 6: assets/Homeworks/Tarea6.ipynb
 plugins:
   - search
   - mkdocs-jupyter:

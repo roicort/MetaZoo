@@ -1,6 +1,6 @@
 # Utils
 
-::: metazoo.bio.evolutionary.utils
+::: metazoo.bio.utils
     handler: python
     options:
       show_source: true
