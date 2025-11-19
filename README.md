@@ -17,10 +17,10 @@ A zoo of metaheuristic algorithms (please do not feed them) for optimization.
         - [ ] Evolution Strategies (ES)
         - [ ] Evolutionary Programming (EP)
         - [ ] Genetic Programming (GP)
-        - [ ] Differential Evolution (DE)
+        - [X] Differential Evolution (DE)
     - [ ] Darwin (Swarm Intelligence and Other Animal-inspired Algorithms)
         - Swarm
-            - [ ] Particle Swarm Optimization (PSO)
+            - [X] Particle Swarm Optimization (PSO)
             - [ ] Ant Colony Optimization (ACO)
             - [ ] Artificial Bee Colony (ABC)
             - [ ] Firefly Algorithm (FA)
