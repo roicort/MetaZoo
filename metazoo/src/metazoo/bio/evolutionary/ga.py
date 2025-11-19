@@ -1,17 +1,19 @@
-# Genetic Algorithms
+# Genetic Algorithm (GA)
 
-from typing import Optional, Callable, Sequence, Tuple
+from typing import Callable, Optional, Sequence, Tuple
+
 import numpy as np
+from plotly import express as px
+from rich.console import Console
 from rich.progress import Progress
 from rich.table import Table
-from rich.console import Console
-from plotly import express as px
 
-from .utils import Population, Encoding
+from metazoo.bio.utils import Encoding, Population
 
 
 class GeneticAlgorithm:
     """A Simple Genetic Algorithm (GA) implementation."""
+
     def __init__(
         self,
         fitness_function: Callable[[np.ndarray], float],
@@ -54,16 +56,16 @@ class GeneticAlgorithm:
         table.add_row("Genome Length", str(self.genome_length))
         table.add_row("Mutation Rate", str(self.mutation_rate))
         table.add_row("Crossover Rate", str(self.crossover_rate))
-        #table.add_row("Encoding", str(self.encoding))
+        # table.add_row("Encoding", str(self.encoding))
         table.add_row("Selection Function", self.selection_function.__name__)
         table.add_row("Crossover Function", self.crossover_function.__name__)
         table.add_row("Mutation Function", self.mutation_function.__name__)
         table.add_row("Fitness Function", self.fitness_function.__name__)
-        #table.add_row("Dimension", str(self.dim))
+        # table.add_row("Dimension", str(self.dim))
         table.add_row(
             "Elitism", str(self.elitism) if self.elitism is not None else "None"
         )
-        #if self.encoding == "binary":
+        # if self.encoding == "binary":
         #    table.add_row("Epsilon", str(self.epsilon))
         #    table.add_row("Bits Per Var", str(self.bits_per_var))
         #    table.add_row("Genome Length", str(self.genome_length))
@@ -76,7 +78,7 @@ class GeneticAlgorithm:
         """
         Evaluate the fitness of the current population.
         """
-        
+
         # Raw Fitness.
 
         raw_fitness = np.array(
@@ -109,7 +111,9 @@ class GeneticAlgorithm:
         fitness, fitness_transformed = self.eval()
         self.fitness_history.append(fitness.mean())
         self.best_history.append(self.best_fitness)
-        selected_indices = self.selection_function(self.population.individuals, fitness_transformed)
+        selected_indices = self.selection_function(
+            self.population.individuals, fitness_transformed
+        )
         selected_parents = self.population.individuals[selected_indices]
         next_generation = self.create_descendants(selected_parents)
 
@@ -177,7 +181,10 @@ class GeneticAlgorithm:
                 pop_history.append(self.population.individuals.copy())
                 best_history.append(self.best_individual)
         if history:
-            pop_history = [[self.population.encoding.decode(ind) for ind in gen] for gen in pop_history]
+            pop_history = [
+                [self.population.encoding.decode(ind) for ind in gen]
+                for gen in pop_history
+            ]
             return (best_history, pop_history)
 
     def fitness_plot(self, best=False) -> None:
@@ -195,6 +202,6 @@ class GeneticAlgorithm:
                     labels={"x": "Generation", "y": "Best Fitness"},
                     title="Best Fitness History",
                 )
-                return fig 
+                return fig
         else:
             raise ValueError("No fitness history to plot. Run the algorithm first.")
