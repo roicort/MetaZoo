@@ -1,7 +1,10 @@
 # Particle Swarm Optimization (PSO)
 
 import numpy as np
-from metazoo.bio.utils import Encoding, Real, Permutation
+import plotly.express as px
+from rich.progress import Progress
+
+from metazoo.bio.utils import Encoding, Permutation, Real
 
 
 class Particle:
@@ -9,9 +12,13 @@ class Particle:
         self.position = position
         self.velocity = velocity
         self.best_position = position.copy()
-        self.best_value =  np.inf if minimize else -np.inf
+        self.best_value = np.inf if minimize else -np.inf
+
+
 class Swarm:
-    def __init__(self, population_size: int, encoding: Encoding, minimize: bool = False):
+    def __init__(
+        self, population_size: int, encoding: Encoding, minimize: bool = False
+    ):
         self.size = population_size
         self.encoding = encoding
         self.particles = []
@@ -25,7 +32,9 @@ class Swarm:
                 velocity = []  # List of swaps or moves
             else:
                 raise ValueError("Unknown encoding type")
-            self.particles.append(Particle(position=position, velocity=velocity, minimize=minimize))
+            self.particles.append(
+                Particle(position=position, velocity=velocity, minimize=minimize)
+            )
 
     def __len__(self):
         return len(self.particles)
@@ -38,6 +47,7 @@ class Swarm:
 
     def __setitem__(self, index, value):
         self.particles[index] = value
+
 
 def get_permutation_swaps(current: np.ndarray, target: np.ndarray):
     """Get the list of swaps needed to convert current permutation to target permutation."""
@@ -90,7 +100,7 @@ class ParticleSwarmOptimizer:
 
     def summary(self):
         """
-        Print all relevant information about the PSO instance using rich.
+        Summarize the PSO configuration.
         """
         from rich.console import Console
         from rich.table import Table
@@ -150,9 +160,7 @@ class ParticleSwarmOptimizer:
             for i, particle in enumerate(self.swarm):
                 r1, r2 = np.random.rand(), np.random.rand()
                 cognitive_velocity = (
-                    self.cognitive
-                    * r1
-                    * (particle.best_position - particle.position)
+                    self.cognitive * r1 * (particle.best_position - particle.position)
                 )
                 social_velocity = (
                     self.social
@@ -167,9 +175,19 @@ class ParticleSwarmOptimizer:
                 particle.position += particle.velocity
 
                 # Clip position to bounds if defined
-                if hasattr(self.swarm.encoding, "bounds") and self.swarm.encoding.bounds is not None:
+                if (
+                    hasattr(self.swarm.encoding, "bounds")
+                    and self.swarm.encoding.bounds is not None
+                ):
                     lower, upper = np.array(self.swarm.encoding.bounds).T
                     particle.position = np.clip(particle.position, lower, upper)
+
+                fitness_value = fitness[i]
+                if (self.minimize and fitness_value < particle.best_value) or (
+                    not self.minimize and fitness_value > particle.best_value
+                ):
+                    particle.best_position = particle.position.copy()
+                    particle.best_value = fitness_value
 
         if isinstance(self.swarm.encoding, Permutation):
             for i, particle in enumerate(self.swarm):
@@ -180,14 +198,18 @@ class ParticleSwarmOptimizer:
                 cognitive_swaps = get_permutation_swaps(
                     particle.position, particle.best_position
                 )
-                num_cognitive_swaps = int(self.cognitive * np.random.rand() * len(cognitive_swaps))
+                num_cognitive_swaps = int(
+                    self.cognitive * np.random.rand() * len(cognitive_swaps)
+                )
                 new_velocity.extend(cognitive_swaps[:num_cognitive_swaps])
 
                 # Social component
                 social_swaps = get_permutation_swaps(
                     particle.position, self.best_individual.position
                 )
-                num_social_swaps = int(self.social * np.random.rand() * len(social_swaps))
+                num_social_swaps = int(
+                    self.social * np.random.rand() * len(social_swaps)
+                )
                 new_velocity.extend(social_swaps[:num_social_swaps])
 
                 # Update particle velocity and position
@@ -217,8 +239,6 @@ class ParticleSwarmOptimizer:
         pop_history = []
         best_history = []
         if verbose:
-            from rich.progress import Progress
-
             with Progress() as progress:
                 task = progress.add_task("Optimizing...", total=iterations)
                 for _ in range(iterations):
@@ -238,7 +258,6 @@ class ParticleSwarmOptimizer:
         """
         Plot the fitness history using plotly.
         """
-        import plotly.express as px
 
         if self.fitness_history:
             if not best:
