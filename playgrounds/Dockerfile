@@ -11,13 +11,28 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     git \
     musescore \
+    fluidsynth \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libgl1-mesa-glx \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+RUN mkdir -p /tmp/generated && chmod 777 /tmp/generated
+
+ENV QT_QPA_PLATFORM=offscreen
+
 COPY . .
+
+RUN uv sync
 
 EXPOSE 8888
 
 HEALTHCHECK CMD curl --fail http://localhost:8888/_stcore/health
 
-CMD ["uv","run", "streamlit", "run", "app.py", "--server.port=8888", "--server.address=0.0.0.0"]
+ENTRYPOINT [ "uv", "run"]
+
+CMD [ "streamlit", "run", "app.py", "--server.port=8888", "--server.address=0.0.0.0" ]

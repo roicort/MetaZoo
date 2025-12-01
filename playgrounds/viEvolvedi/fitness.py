@@ -345,4 +345,4 @@ class ScoreFitness:
             showlegend=False,
             title="Perfil de Fitness de la Melodía"
         )
-        fig.show()
+        return fig

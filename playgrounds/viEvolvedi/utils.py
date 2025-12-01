@@ -1,4 +1,5 @@
 import pretty_midi
+from metazoo.bio.evolutionary import GeneticAlgorithm
 
 def melody_to_midi(melody, filename="melody.mid", velocity=100, instrument_name="Acoustic Grand Piano"):
     pm = pretty_midi.PrettyMIDI()
@@ -13,3 +14,8 @@ def melody_to_midi(melody, filename="melody.mid", velocity=100, instrument_name=
     pm.instruments.append(instrument)
     pm.write(filename)
     return filename
+
+class MelodyGA(GeneticAlgorithm):
+    def __init__(self, *args, **kwargs):
+        kwargs['minimize'] = False
+        super().__init__(*args, **kwargs)
