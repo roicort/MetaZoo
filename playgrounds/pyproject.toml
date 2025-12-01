@@ -14,7 +14,9 @@ dependencies = [
     "music21>=9.9.1",
     "pandas>=2.3.3",
     "midi2audio>=0.1.1",
+    "streamlit>=1.49.0",
+    "watchdog>=6.0.0",
 ]
 
 [tool.uv.sources]
-metazoo = { path = "../metazoo", editable = true }
+metazoo = { git = "https://github.com/roicort/MetaZoo", subdirectory = "./metazoo", rev = "main" }
