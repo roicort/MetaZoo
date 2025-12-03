@@ -159,8 +159,15 @@ if st.button("Generar melodía"):
         new_path = png_path.replace('.png', '-1.png')
 
         if st.context.theme.type == "dark":
+            # Snippet para invertir colores de la partitura 
+            # Solo de los canales RGB, manteniendo la transparencia
             img = Image.open(new_path)
-            inverted_image = ImageOps.invert(img.convert("RGB"))
+            img_rgba = img.convert("RGBA")
+            r, g, b, a = img_rgba.split()
+            rgb = Image.merge("RGB", (r, g, b))
+            inverted_rgb = ImageOps.invert(rgb)
+            inv_r, inv_g, inv_b = inverted_rgb.split()
+            inverted_image = Image.merge("RGBA", (inv_r, inv_g, inv_b, a))
             inverted_image.save(new_path)
         else:
             new_path = png_path
