@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 import streamlit as st
 import pandas as pd
 from PIL import Image, ImageOps
@@ -74,22 +75,51 @@ default_weights = [
 
 df_defaults = pd.DataFrame(default_weights, columns=["Metric", "Weight"])
 
+# Initialize session state before creating the editor widget.
+# Use a different key for storage to avoid modifying the widget key after instantiation.
+if "weights_table_data" not in st.session_state:
+    st.session_state["weights_table_data"] = df_defaults.copy()
+
 with st.expander("Configuración de pesos de fitness", expanded=False):
     # editable table
     try:
-        weights_df = st.data_editor(df_defaults, num_rows="fixed", use_container_width=True, key="weights_table")
+        weights_df = st.data_editor(
+            st.session_state["weights_table_data"],
+            num_rows="fixed",
+            use_container_width=True,
+            key="weights_table",
+        )
     except Exception:
         # fallback if old streamlit version
-        weights_df = st.experimental_data_editor(df_defaults, num_rows="fixed", use_container_width=True, key="weights_table")
+        weights_df = st.experimental_data_editor(
+            st.session_state["weights_table_data"],
+            num_rows="fixed",
+            use_container_width=True,
+            key="weights_table",
+        )
+
+    # Persist the edited table back to session state for the next run
+    try:
+        st.session_state["weights_table_data"] = weights_df.copy()
+    except Exception:
+        # If weights_df isn't defined for some reason, keep existing session state value
+        pass
+
     if st.button("Resetear valores por defecto"):
-        # Reset the table by writing the defaults back via session state key
-        st.session_state["weights_table"] = df_defaults.copy()
-        weights_df = df_defaults.copy()
+        # Reset the stored table values and force a re-run so the widget is re-instantiated
+        st.session_state["weights_table_data"] = df_defaults.copy()
+        st.experimental_rerun()
 
 # Validate and extract weights in order
 weights = []
+# Prefer the editor result, but fall back to the session state stored copy if the widget didn't produce a value
+effective_weights_df = None
+if 'weights_df' in locals() and isinstance(weights_df, pd.DataFrame):
+    effective_weights_df = weights_df
+else:
+    effective_weights_df = st.session_state.get("weights_table_data", df_defaults)
 try:
-    weights = [float(w) for w in list(weights_df["Weight"])[:len(df_defaults)]]
+    weights = [float(w) for w in list(effective_weights_df["Weight"])[:len(df_defaults)]]
 except Exception:
     st.error("Los pesos deben ser valores numéricos. Corrige la tabla antes de generar la melodía.")
 
@@ -145,8 +175,9 @@ if st.button("Generar melodía"):
     with st.spinner("Post-processing..."):
 
         melody = ga.best_individual
-        date = datetime.now().strftime("%d-%m-%y, %H.%M")
-        midi_path = os.path.join(SAVE_PATH, f"melody_{date}.mid")
+        date = datetime.now().strftime("%d-%m-%y")
+        randomstring = ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=5))
+        midi_path = os.path.join(SAVE_PATH, f"melody_{date}_{randomstring}.mid")
         midi_file = melody_to_midi(melody, filename=midi_path)
 
         # Convertir MIDI a WAV
