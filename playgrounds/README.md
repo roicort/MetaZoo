@@ -1,13 +1,18 @@
 # Playgrounds
 
-Playgrounds is a collection of interactive Jupyter notebooks for experimenting with the MetaZoo library.
-
-It provides a hands-on environment for users to explore and visualize the behavior of different metaheuristic algorithms.
+Playgrounds is collection of experiments and a small streamlit that provides creative applications of metaheuristic algorithms.
 
 ## Usage
 
-Install and launch Jupyter Notebook using the following command:
+Clone the repository and run the following command:
 
-```bash
-uv run jupyter notebook
+```
+uv run streamlit run app.py
+```
+
+or use build and run the Docker image:
+
+```
+docker build -t metazoo/playgrounds .
+docker run -p 8888:8888 metazoo/playgrounds
 ```
