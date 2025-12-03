@@ -37,7 +37,8 @@ if sys.platform.startswith("linux"):
 os.makedirs(SAVE_PATH, exist_ok=True)
 
 
-st.title("ViEVOLVEdi - Generador Evolutivo de Melodías")
+st.title("ViEVOLVEdi")
+st.subheader("Generador Evolutivo de Melodías")
 
 note_range = st.slider("Rango de notas (MIDI)", 21, 108, (60, 72))
 col1, col2 = st.columns([1, 1])
@@ -138,43 +139,43 @@ if st.button("Generar melodía"):
             ]
             return best_history, pop_history
         
-    with st.spinner("Evolucionando melodía..."):
-        best_history, pop_history = streamlit_runner(ga, generations=generations, history=True)
+    best_history, pop_history = streamlit_runner(ga, generations=generations, history=True)
 
-    melody = ga.best_individual
-    date = datetime.now().strftime("%d-%m-%y, %H.%M")
-    midi_path = os.path.join(SAVE_PATH, f"melody_{date}.mid")
-    midi_file = melody_to_midi(melody, filename=midi_path)
-    #st.success(f"MIDI guardado en: {midi_path}")
+    with st.spinner("Post-processing..."):
 
-    with open(midi_path, "rb") as midi_data:
-        st.download_button(
-            label="Descargar MIDI",
-            data=midi_data,
-            file_name=os.path.basename(midi_path),
-            mime="audio/midi"
-        )
+        melody = ga.best_individual
+        date = datetime.now().strftime("%d-%m-%y, %H.%M")
+        midi_path = os.path.join(SAVE_PATH, f"melody_{date}.mid")
+        midi_file = melody_to_midi(melody, filename=midi_path)
 
-    # Convertir MIDI a WAV
-    wav_path = midi_path.replace('.mid', '.wav')
-    FluidSynth().midi_to_audio(midi_path, wav_path)
+        # Convertir MIDI a WAV
+        wav_path = midi_path.replace('.mid', '.wav')
+        FluidSynth().midi_to_audio(midi_path, wav_path)
 
-    # Mostrar reproductor de audio en Streamlit
-    st.audio(wav_path, format="audio/wav")
+        score = converter.parse(midi_file)
+        png_path = os.path.join(SAVE_PATH, f"melody_{date}-1.png")
+        score.write('musicxml.png', fp=png_path)
+        new_path = png_path.replace('.png', '-1.png')
+        st.image(new_path, caption="Partitura generada")
 
-    score = converter.parse(midi_file)
-    png_path = os.path.join(SAVE_PATH, f"melody_{date}-1.png")
-    score.write('musicxml.png', fp=png_path)
-    new_path = png_path.replace('.png', '-1.png')
-    st.image(new_path, caption="Partitura generada")
+        # Mostrar reproductor de audio en Streamlit
+        st.audio(wav_path, format="audio/wav")
 
-    st.subheader("Fitness")
-    fig = fitness.plot(melody)
-    st.plotly_chart(fig)
+        with open(midi_path, "rb") as midi_data:
+            st.download_button(
+                label="Descargar MIDI",
+                data=midi_data,
+                file_name=os.path.basename(midi_path),
+                mime="audio/midi"
+            )
 
-    st.subheader("Convergencia")
+        st.subheader("Fitness")
+        fig = fitness.plot(melody)
+        st.plotly_chart(fig)
 
-    fig2 = ga.fitness_plot()
-    st.plotly_chart(fig2)
+        st.subheader("Convergencia")
 
-    st.balloons()
+        fig2 = ga.fitness_plot()
+        st.plotly_chart(fig2)
+
+        st.balloons()
