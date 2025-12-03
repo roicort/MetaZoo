@@ -176,3 +176,5 @@ if st.button("Generar melodía"):
 
     fig2 = ga.fitness_plot()
     st.plotly_chart(fig2)
+
+    st.balloons()
