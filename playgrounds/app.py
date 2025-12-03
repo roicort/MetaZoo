@@ -2,6 +2,7 @@ import os
 import sys
 import streamlit as st
 import pandas as pd
+from PIL import Image, ImageOps
 from datetime import datetime
 
 # MIDI y MusicXML
@@ -156,6 +157,14 @@ if st.button("Generar melodía"):
         png_path = os.path.join(SAVE_PATH, f"melody_{date}-1.png")
         score.write('musicxml.png', fp=png_path)
         new_path = png_path.replace('.png', '-1.png')
+
+        if st.context.theme.type == "dark":
+            img = Image.open(new_path)
+            inverted_image = ImageOps.invert(img.convert("RGB"))
+            inverted_image.save(new_path)
+        else:
+            new_path = png_path
+
         st.image(new_path, caption="Partitura generada")
 
         # Mostrar reproductor de audio en Streamlit
