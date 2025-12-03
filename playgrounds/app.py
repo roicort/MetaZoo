@@ -4,6 +4,7 @@ import random
 import streamlit as st
 import pandas as pd
 from PIL import Image, ImageOps
+import shutil
 from datetime import datetime
 
 # MIDI y MusicXML
@@ -176,7 +177,7 @@ if st.button("Generar melodía"):
 
         melody = ga.best_individual
         date = datetime.now().strftime("%d-%m-%y")
-        randomstring = ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=5))
+        randomstring = ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=10))
         midi_path = os.path.join(SAVE_PATH, f"melody_{date}_{randomstring}.mid")
         midi_file = melody_to_midi(melody, filename=midi_path)
 
@@ -185,9 +186,30 @@ if st.button("Generar melodía"):
         FluidSynth().midi_to_audio(midi_path, wav_path)
 
         score = converter.parse(midi_file)
-        png_path = os.path.join(SAVE_PATH, f"melody_{date}-1.png")
-        score.write('musicxml.png', fp=png_path)
-        new_path = png_path.replace('.png', '-1.png')
+        base_png = os.path.join(SAVE_PATH, f"melody_{date}_{randomstring}")
+        expected_png = f"{base_png}.png"
+
+        # Write the score image to the expected PNG location
+        score.write('musicxml.png', fp=expected_png)
+
+        # music21 / Musescore can append "-1" to the filename if it creates an alternative
+        # file (e.g. melody_...-1.png). Detect that and rename safely to the expected filename.
+        if not os.path.exists(expected_png):
+            alt_png = f"{base_png}-1.png"
+            if os.path.exists(alt_png):
+                # Use shutil.move (or os.replace) instead of os.move which doesn't exist
+                shutil.move(alt_png, expected_png)
+                new_path = expected_png
+            else:
+                # Last-resort scan: find a matching PNG in SAVE_PATH that starts with the base name
+                matches = [p for p in os.listdir(SAVE_PATH) if p.startswith(os.path.basename(base_png)) and p.endswith('.png')]
+                if matches:
+                    new_path = os.path.join(SAVE_PATH, matches[0])
+                else:
+                    # If nothing was created, fallback to the expected filename (it might still get created in some cases)
+                    new_path = expected_png
+        else:
+            new_path = expected_png
 
         if st.context.theme.type == "dark":
             # Snippet para invertir colores de la partitura 
@@ -201,7 +223,8 @@ if st.button("Generar melodía"):
             inverted_image = Image.merge("RGBA", (inv_r, inv_g, inv_b, a))
             inverted_image.save(new_path)
         else:
-            new_path = png_path
+            # Already set to expected_png (or detected alternative) above
+            pass
 
         st.image(new_path, caption="Partitura generada")
 
