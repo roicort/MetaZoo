@@ -170,13 +170,16 @@ if st.button("Generar melodía"):
         # Mostrar reproductor de audio en Streamlit
         st.audio(wav_path, format="audio/wav")
 
-        with open(midi_path, "rb") as midi_data:
-            st.download_button(
-                label="Descargar MIDI",
-                data=midi_data,
-                file_name=os.path.basename(midi_path),
-                mime="audio/midi"
-            )
+        # Leer el MIDI como bytes para Streamlit
+        with open(midi_path, "rb") as _midi_f:
+            midi_bytes = _midi_f.read()
+
+        st.download_button(
+            label="Descargar MIDI",
+            data=midi_bytes,
+            file_name=os.path.basename(midi_path),
+            mime="audio/midi"  # Tipo MIME para archivos MIDI
+        )
 
         st.subheader("Fitness")
         fig = fitness.plot(melody)
