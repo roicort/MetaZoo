@@ -43,13 +43,13 @@ st.subheader("Generador Evolutivo de Melodías")
 note_range = st.slider("Rango de notas (MIDI)", 21, 108, (60, 72))
 col1, col2 = st.columns([1, 1])
 with col1:
-    length = st.number_input("Longitud de la melodía", min_value=8, max_value=256, value=16)
+    length = st.number_input("Longitud de la melodía", min_value=8, max_value=256, value=32)
     population_size = st.number_input("Tamaño de la población", min_value=10, max_value=500, value=100)
     generations = st.number_input("Generaciones", min_value=10, max_value=1000, value=100)
 with col2:
-    crossover_rate = st.slider("Tasa de cruce", 0.0, 1.0, 0.7)
-    mutation_rate = st.slider("Tasa de mutación", 0.0, 1.0, 0.1)
-    elitism = st.slider("Elitismo", 0.0, 1.0, 0.1)
+    crossover_rate = st.slider("Tasa de cruce", 0.0, 1.0, 0.7, step=0.1)
+    mutation_rate = st.slider("Tasa de mutación", 0.0, 1.0, 0.1, step=0.1)
+    elitism = st.slider("Elitismo", 0.0, 1.0, 0.1, step=0.1)
 
 default_weights = [
     ("Diversity", 1.0),
@@ -68,7 +68,7 @@ default_weights = [
     ("Silent Beats", 1.0),
     ("Harmonic Relation", 0.1),
     ("Excessive Repetition", 1.0),
-    ("Melodic Resolution", 10.0)
+    ("Melodic Resolution", 1.0)
 ]
 
 df_defaults = pd.DataFrame(default_weights, columns=["Metric", "Weight"])
