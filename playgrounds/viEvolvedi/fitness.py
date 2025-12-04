@@ -6,23 +6,23 @@ class ScoreFitness:
     def __init__(self, weights=None):
         if weights is None:
             self.weights = [
-                1.0,  # Diversity
-                1.0,  # Rhythmic Variation
-                1.0,  # Pitch Range
-                1.0,  # Temporal Density
-                1.0,  # Contour Variation
-                1.0,  # Intervallic Variety
-                1.0,  # Syncopation Index
-                1.0,  # Tonal Stability
-                0.1,  # Motivic Repetition
-                5.0,  # Phrase Structure
-                0.1,  # Tension Release
-                1.0,  # Articulation Variation
-                0.1,  # Dynamic Range
-                1.0,  # Silent Beats
-                0.1,  # Harmonic Relation
-                1.0,  # Excessive Repetition
-                0.1,  # Melodic Resolution
+                1.0,    # Diversity
+                1.0,    # Rhythmic Variation
+                1.0,    # Pitch Range
+                1.0,    # Temporal Density
+                1.0,    # Contour Variation
+                1.0,    # Intervallic Variety
+                1.0,    # Syncopation Index
+                1.0,    # Tonal Stability
+                0.1,    # Motivic Repetition
+                0.5,    # Phrase Structure
+                0.05,   # Tension Release
+                1.0,    # Articulation Variation
+                0.01,   # Dynamic Range
+                1.0,    # Silent Beats
+                0.01,   # Harmonic Relation
+                1.0,    # Excessive Repetition
+                0.1,    # Melodic Resolution
             ]
         else:
             self.weights = weights
