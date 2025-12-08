@@ -197,16 +197,13 @@ if st.button("Generar melodía"):
         if not os.path.exists(expected_png):
             alt_png = f"{base_png}-1.png"
             if os.path.exists(alt_png):
-                # Use shutil.move (or os.replace) instead of os.move which doesn't exist
                 shutil.move(alt_png, expected_png)
                 new_path = expected_png
             else:
-                # Last-resort scan: find a matching PNG in SAVE_PATH that starts with the base name
                 matches = [p for p in os.listdir(SAVE_PATH) if p.startswith(os.path.basename(base_png)) and p.endswith('.png')]
                 if matches:
                     new_path = os.path.join(SAVE_PATH, matches[0])
                 else:
-                    # If nothing was created, fallback to the expected filename (it might still get created in some cases)
                     new_path = expected_png
         else:
             new_path = expected_png
@@ -223,7 +220,6 @@ if st.button("Generar melodía"):
             inverted_image = Image.merge("RGBA", (inv_r, inv_g, inv_b, a))
             inverted_image.save(new_path)
         else:
-            # Already set to expected_png (or detected alternative) above
             pass
 
         st.image(new_path, caption="Partitura generada")
